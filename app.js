@@ -309,10 +309,7 @@ async function finishRoundAndShowResults() {
 
 async function showRoundResults() {
   if (!currentRoundId) return;
-  if (resultsShownFor === currentRoundId) {
-    show("voteResultsScreen");
-    return;
-  }
+  if (resultsShownFor === currentRoundId) return;
   const roundId = currentRoundId;
   const { data, error } = await db.rpc("get_round_results", { p_round_id: roundId });
   if (error) {
@@ -400,7 +397,6 @@ $("newRoundBtn").onclick = () => {
   currentRoundId = null;
   assignmentLoadedFor = null;
   selectedVoteTarget = null;
-  resultsShownFor = null;
   show("lobbyScreen");
   refreshLobby();
 };
