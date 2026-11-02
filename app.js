@@ -106,7 +106,7 @@ async function refreshLobby() {
   }
 
   if (data.current_round?.status === "playing" || data.current_round?.status === "voting") {
-    await updateRoundProgress(players, data.current_round.status);
+    await updateRoundProgress(players, data.current_round.status, data.my_player_id);
   }
   $("playerCount").textContent = players.length + (players.length === 1 ? " PLAYER" : " PLAYERS");
   $("playerList").innerHTML = players.map((player, index) =>
@@ -223,7 +223,7 @@ let selectedVoteTarget = null;
 let progressBusy = false;
 let finalizingRound = false;
 
-async function updateRoundProgress(players, knownStatus) {
+async function updateRoundProgress(players, knownStatus, myPlayerId) {
   if (!currentRoundId || progressBusy) return;
   progressBusy = true;
   try {
@@ -253,7 +253,7 @@ async function updateRoundProgress(players, knownStatus) {
         "Votes submitted: " + progress.votes_received + " of " + progress.votes_total;
       $("submitVoteBtn").disabled = progress.my_vote_submitted || !selectedVoteTarget;
       $("submitVoteBtn").textContent = progress.my_vote_submitted ? "Vote submitted" : "Submit my vote";
-      if (!progress.my_vote_submitted) renderVoteChoices(players);
+      if (!progress.my_vote_submitted) renderVoteChoices(players, myPlayerId);
       if (progress.votes_total > 0 && progress.votes_received >= progress.votes_total) {
         await finishRoundAndShowResults();
       }
@@ -270,10 +270,10 @@ async function updateRoundProgress(players, knownStatus) {
   }
 }
 
-function renderVoteChoices(players) {
+function renderVoteChoices(players, myPlayerId) {
   const list = $("voteList");
   if (!list || list.dataset.rendered === currentRoundId) return;
-  list.innerHTML = players.map(player =>
+  list.innerHTML = players.filter(player => player.id !== myPlayerId).map(player =>
     '<button class="choice vote-choice" type="button" data-vote-target="' +
     escapeHtml(player.id) + '">' + escapeHtml(player.display_name) + '</button>'
   ).join("");
@@ -393,6 +393,7 @@ $("backHomeBtn").onclick = () => {
 
 $("submitResultsBtn").onclick = async () => {
   if (!currentRoundId || selectedMatchResult === null || selectedTaskCompleted === null || busy) return;
+  let reportSubmitted = false;
   setBusy(true, "submitResultsBtn");
   try {
     const { data, error } = await db.rpc("submit_round_report", {
@@ -401,6 +402,7 @@ $("submitResultsBtn").onclick = async () => {
       p_task_completed: selectedTaskCompleted
     });
     if (error) throw error;
+    reportSubmitted = true;
     $("submitResultsBtn").textContent = "Results submitted";
     $("submitResultsBtn").disabled = true;
     if (data.voting_open) {
@@ -415,6 +417,10 @@ $("submitResultsBtn").onclick = async () => {
     toast(error.message || "Couldn't submit your results");
   } finally {
     setBusy(false, "submitResultsBtn");
+    if (reportSubmitted) {
+      $("submitResultsBtn").textContent = "Results submitted";
+      $("submitResultsBtn").disabled = true;
+    }
   }
 };
 
