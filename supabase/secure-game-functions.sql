@@ -413,7 +413,7 @@ returns jsonb
 language plpgsql
 security definer
 set search_path = pg_catalog, public, auth
-as $
+as $\
 declare
   v_uid uuid := auth.uid();
   v_room_id uuid;
