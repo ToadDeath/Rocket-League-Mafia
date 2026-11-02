@@ -21,7 +21,7 @@ create or replace function public.create_room(p_display_name text, p_settings js
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, auth
+set search_path = pg_catalog, public, auth
 as $$
 declare
   v_uid uuid := auth.uid();
@@ -46,7 +46,7 @@ begin
   ) || coalesce(p_settings, '{}'::jsonb);
 
   loop
-    v_code := upper(substr(encode(gen_random_bytes(5), 'hex'), 1, 6));
+    v_code := upper(substr(md5(random()::text || clock_timestamp()::text), 1, 6));
     exit when not exists (select 1 from public.rooms where code = v_code);
   end loop;
 
@@ -65,7 +65,7 @@ create or replace function public.join_room(p_room_code text, p_display_name tex
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, auth
+set search_path = pg_catalog, public, auth
 as $$
 declare
   v_uid uuid := auth.uid();
@@ -102,7 +102,7 @@ create or replace function public.get_room_state(p_room_code text)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, auth
+set search_path = pg_catalog, public, auth
 as $$
 declare
   v_uid uuid := auth.uid();
@@ -140,7 +140,7 @@ create or replace function public.start_round(p_room_code text)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, auth
+set search_path = pg_catalog, public, auth
 as $$
 declare
   v_uid uuid := auth.uid();
@@ -202,7 +202,7 @@ create or replace function public.get_my_assignment(p_round_id uuid)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, auth
+set search_path = pg_catalog, public, auth
 as $$
 declare
   v_uid uuid := auth.uid();
@@ -226,24 +226,31 @@ create or replace function public.submit_round_report(p_round_id uuid, p_match_r
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, auth
+set search_path = pg_catalog, public, auth
 as $$
 declare
   v_uid uuid := auth.uid();
   v_player_id uuid;
   v_room_id uuid;
   v_status text;
+  v_existing_match_result text;
   v_total integer;
   v_submitted integer;
 begin
   if v_uid is null then raise exception 'Sign in is required'; end if;
   if p_match_result not in ('win','loss') then raise exception 'Invalid match result'; end if;
 
-  select p.id,r.room_id,r.status into v_player_id,v_room_id,v_status
+  select p.id,r.room_id,r.status,r.match_result into v_player_id,v_room_id,v_status,v_existing_match_result
   from public.rounds r join public.players p on p.room_id=r.room_id
   where r.id=p_round_id and p.user_id=v_uid;
   if v_player_id is null then raise exception 'You are not in this round'; end if;
   if v_status <> 'playing' then raise exception 'This round is not accepting match reports'; end if;
+  if v_existing_match_result is not null and v_existing_match_result <> p_match_result then
+    raise exception 'Players must submit the same match result';
+  end if;
+  if v_existing_match_result is null then
+    update public.rounds set match_result=p_match_result where id=p_round_id;
+  end if;
 
   insert into public.round_reports(round_id,player_id,match_result,task_completed)
   values (p_round_id,v_player_id,p_match_result,p_task_completed)
@@ -268,7 +275,7 @@ create or replace function public.submit_vote(p_round_id uuid, p_target_player_i
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, auth
+set search_path = pg_catalog, public, auth
 as $$
 declare
   v_uid uuid := auth.uid();
@@ -300,7 +307,7 @@ create or replace function public.finalize_round(p_round_id uuid)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public, auth
+set search_path = pg_catalog, public, auth
 as $$
 declare
   v_uid uuid := auth.uid();
@@ -311,10 +318,9 @@ declare
   v_max integer;
   v_leaders integer;
   v_majority uuid;
-  v_imposter uuid;
+  v_imposters uuid[];
   v_correct boolean := false;
   v_tie boolean := false;
-  v_imp_vote uuid;
   v_settings jsonb;
   v_correct_pts integer;
   v_imp_bonus integer;
@@ -336,23 +342,21 @@ begin
   select count(*) into v_votes from public.votes where round_id=p_round_id;
   if v_votes <> v_players then raise exception 'Waiting for all players to vote'; end if;
 
-  select count(*) into v_max from (
-    select target_player_id,count(*) n from public.votes where round_id=p_round_id
-    group by target_player_id
-  ) q where q.n=(select max(n) from (select count(*) n from public.votes where round_id=p_round_id group by target_player_id) z);
-  select max(n) into v_max from (select count(*) n from public.votes where round_id=p_round_id group by target_player_id) q;
+  select max(n) into v_max from (
+    select count(*) n from public.votes where round_id=p_round_id group by target_player_id
+  ) q;
   select count(*) into v_leaders from (
-    select target_player_id,count(*) n from public.votes where round_id=p_round_id group by target_player_id
-    having count(*)=v_max
+    select target_player_id,count(*) n from public.votes where round_id=p_round_id
+    group by target_player_id having count(*)=v_max
   ) q;
   select target_player_id into v_majority from (
-    select target_player_id,count(*) n from public.votes where round_id=p_round_id group by target_player_id
-    having count(*)=v_max
+    select target_player_id,count(*) n from public.votes where round_id=p_round_id
+    group by target_player_id having count(*)=v_max
   ) q limit 1;
 
   v_tie := v_leaders <> 1;
-  select player_id into v_imposter from public.assignments
-  where round_id=p_round_id and role='imposter' limit 1;
+  select array_agg(player_id) into v_imposters from public.assignments
+  where round_id=p_round_id and role='imposter';
   v_correct := not v_tie and exists(
     select 1 from public.assignments where round_id=p_round_id
     and player_id=v_majority and role='imposter'
@@ -378,13 +382,14 @@ begin
   if v_correct then
     update public.players set score=score+v_correct_pts
     where id in (select player_id from public.assignments where round_id=p_round_id and role='teammate');
-    update public.players set score=score-v_imp_loss where id=v_imposter;
+    update public.players set score=score-v_imp_loss where id = any(v_imposters);
   elsif not v_tie then
-    select target_player_id into v_imp_vote from public.votes
-    where round_id=p_round_id and voter_player_id=v_imposter;
-    if v_imp_vote=v_majority then
-      update public.players set score=score+v_imp_bonus where id=v_imposter;
-    end if;
+    update public.players p set score=score+v_imp_bonus
+    where p.id in (
+      select a.player_id from public.assignments a
+      join public.votes v on v.round_id=a.round_id and v.voter_player_id=a.player_id
+      where a.round_id=p_round_id and a.role='imposter' and v.target_player_id=v_majority
+    );
   end if;
 
   update public.rounds set status='completed' where id=p_round_id;
@@ -398,9 +403,45 @@ begin
 
   return jsonb_build_object('tie',v_tie,'correct_vote',v_correct,
     'identified_player_id',case when v_tie then null else v_majority end,
-    'imposter_player_id',v_imposter,'leaderboard',v_changes);
+    'imposter_player_ids',to_jsonb(v_imposters),'leaderboard',v_changes);
 end;
 $$;
+
+
+create or replace function public.get_round_results(p_round_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = pg_catalog, public, auth
+as $
+declare
+  v_uid uuid := auth.uid();
+  v_room_id uuid;
+  v_status text;
+  v_imposters jsonb;
+  v_leaderboard jsonb;
+begin
+  if v_uid is null then raise exception 'Sign in is required'; end if;
+  select room_id,status into v_room_id,v_status from public.rounds where id=p_round_id;
+  if v_room_id is null then raise exception 'Round not found'; end if;
+  if not exists(select 1 from public.players where room_id=v_room_id and user_id=v_uid) then
+    raise exception 'You are not in this room';
+  end if;
+  if v_status <> 'completed' then raise exception 'Results are not available yet'; end if;
+
+  select coalesce(jsonb_agg(jsonb_build_object('player_id',p.id,'display_name',p.display_name)
+                            order by p.display_name), '[]'::jsonb)
+  into v_imposters
+  from public.assignments a join public.players p on p.id=a.player_id
+  where a.round_id=p_round_id and a.role='imposter';
+
+  select coalesce(jsonb_agg(jsonb_build_object('player_id',p.id,'display_name',p.display_name,'score',p.score)
+                            order by p.score desc), '[]'::jsonb)
+  into v_leaderboard from public.players p where p.room_id=v_room_id;
+
+  return jsonb_build_object('imposters',v_imposters,'leaderboard',v_leaderboard);
+end;
+$;
 
 -- Only signed-in players can call these controlled functions.
 revoke all on function public.create_room(text,jsonb) from public, anon;
@@ -411,6 +452,7 @@ revoke all on function public.get_my_assignment(uuid) from public, anon;
 revoke all on function public.submit_round_report(uuid,text,boolean) from public, anon;
 revoke all on function public.submit_vote(uuid,uuid) from public, anon;
 revoke all on function public.finalize_round(uuid) from public, anon;
+revoke all on function public.get_round_results(uuid) from public, anon;
 
 grant execute on function public.create_room(text,jsonb) to authenticated;
 grant execute on function public.join_room(text,text) to authenticated;
@@ -420,3 +462,4 @@ grant execute on function public.get_my_assignment(uuid) to authenticated;
 grant execute on function public.submit_round_report(uuid,text,boolean) to authenticated;
 grant execute on function public.submit_vote(uuid,uuid) to authenticated;
 grant execute on function public.finalize_round(uuid) to authenticated;
+grant execute on function public.get_round_results(uuid) to authenticated;
