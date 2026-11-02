@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1020">
+  <title>Rocket League Mafia</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Rocket League Mafia home" id="homeLink">
+        <span class="brand-mark">RL</span><span>ROCKET LEAGUE <b>MAFIA</b></span>
+      </a>
+      <div class="top-actions"><span class="demo-pill">PROTOTYPE</span><button class="icon-btn" id="helpBtn" aria-label="Help">?</button></div>
+    </header>
+    <main>
+      <section class="screen active" id="homeScreen">
+        <div class="hero">
+          <div class="eyebrow"><span class="pulse"></span> THE GAME RUNS ITSELF</div>
+          <h1>Trust your<br><span class="gradient-text">teammates?</span></h1>
+          <p class="hero-copy">Secret missions. One imposter. No moderator required.</p>
+          <div class="home-actions"><button class="btn primary" id="createBtn">Create a lobby <span>↗</span></button><button class="btn secondary" id="joinBtn">Join a game</button></div>
+          <div class="feature-row"><div><strong>01</strong><span>Get your role</span></div><div><strong>02</strong><span>Complete your task</span></div><div><strong>03</strong><span>Find the imposter</span></div></div>
+        </div>
+        <div class="side-art"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="ball">⚽</div><div class="floating-card card-red"><small>CLASSIFIED</small><b>IMPOSTER</b><span>01 / ???</span></div><div class="floating-card card-blue"><small>MISSION</small><b>GROUND PINCH</b><span>COMPLETE IT</span></div><div class="art-caption">EVERY PLAYER HAS A SECRET.</div></div>
+      </section>
+      <section class="screen" id="createScreen">
+        <button class="back-link" data-back="homeScreen">← Back</button><div class="narrow">
+          <div class="eyebrow">NEW SESSION</div><h2>Create your lobby</h2><p class="muted">Set the rules for this game. You can change these between sessions.</p>
+          <label class="field-label">Your player name<input id="hostName" maxlength="18" placeholder="Enter your name" value="Player 1"></label>
+          <div class="settings-grid"><label class="field-label">Imposters<select id="imposterCount"><option value="1">1 imposter</option><option value="2">2 imposters</option><option value="3">3 imposters</option></select></label><label class="field-label">Rounds<select id="roundCount"><option>5</option><option selected>10</option><option>15</option><option>Unlimited</option></select></label></div>
+          <div class="panel"><div class="panel-heading">POINT SETTINGS <span>DEFAULT RULES</span></div>
+            <div class="point-row"><span>Teammate task completed</span><input type="number" value="3" min="0" id="teammateTaskPts"></div><div class="point-row"><span>Teammate wins match</span><input type="number" value="2" min="0" id="teammateWinPts"></div><div class="point-row"><span>Correct teammate vote</span><input type="number" value="2" min="0" id="correctVotePts"></div><div class="point-row"><span>Imposter loses match</span><input type="number" value="5" min="0" id="imposterLossPts"></div><div class="point-row"><span>Imposter task completed</span><input type="number" value="3" min="0" id="imposterTaskPts"></div><div class="point-row"><span>Imposter votes with wrong majority</span><input type="number" value="2" min="0" id="imposterVotePts"></div>
+          </div><button class="btn primary full" id="makeLobbyBtn">Create game <span>↗</span></button>
+        </div>
+      </section>
+      <section class="screen" id="joinScreen"><button class="back-link" data-back="homeScreen">← Back</button><div class="narrow"><div class="eyebrow">JUMP IN</div><h2>Join a lobby</h2><p class="muted">Enter the room code shared by your group.</p><label class="field-label">Your player name<input id="joinName" maxlength="18" placeholder="Enter your name"></label><label class="field-label">Room code<input id="roomCodeInput" maxlength="6" placeholder="ABC123" class="code-input"></label><button class="btn primary full" id="demoJoinBtn">Join game <span>↗</span></button></div></section>
+      <section class="screen" id="lobbyScreen"><div class="lobby-head"><div><div class="eyebrow">WAITING ROOM</div><h2>Game lobby</h2></div><div class="room-code"><small>ROOM CODE</small><strong id="roomCode">RLMAFI</strong><button id="copyCode">COPY</button></div></div><div class="panel"><div class="panel-heading">PLAYERS <span id="playerCount">4 PLAYERS</span></div><div class="player-list" id="playerList"></div></div><div class="lobby-footer"><p class="muted tiny">In the finished multiplayer version, this lobby updates live for everyone.</p><button class="btn primary" id="startGameBtn">Start round <span>↗</span></button></div></section>
+      <section class="screen" id="roleScreen"><div class="round-label">ROUND <span id="roundNumber">01</span></div><div class="reveal-wrap"><div class="eyebrow">YOUR IDENTITY IS SECRET</div><div class="role-card" id="roleCard"><div class="card-top"><span>CLASSIFIED</span><span id="roleIndex">01 / 04</span></div><div class="role-symbol" id="roleSymbol">◆</div><h2 id="roleTitle">TEAMMATE</h2><p id="roleDescription">Play your game. Complete your mission. Keep your eyes open.</p><div class="card-bottom">DO NOT SHOW THIS SCREEN</div></div><button class="btn secondary full" id="showTaskBtn">Reveal my secret task</button></div></section>
+      <section class="screen" id="taskScreen"><div class="round-label">ROUND <span id="taskRoundNumber">01</span></div><div class="reveal-wrap"><div class="eyebrow">YOUR SECRET OBJECTIVE</div><div class="task-card" id="taskCard"><div class="task-tag">MISSION BRIEF</div><div class="task-icon">◎</div><h2 id="taskTitle">SCORE A GROUND PINCH</h2><p id="taskDescription">Complete this objective during your Rocket League match.</p><div class="card-bottom">KEEP IT TO YOURSELF</div></div><button class="btn primary full" id="goResultsBtn">Continue after match <span>↗</span></button></div></section>
+      <section class="screen" id="resultsScreen"><div class="eyebrow">ROUND <span id="resultsRound">01</span> COMPLETE</div><h2>How did it go?</h2><p class="muted">Report your match result and whether you completed your secret task.</p><div class="result-options"><div class="panel"><div class="panel-heading">MATCH RESULT</div><div class="choice-row"><button class="choice" data-result="win">🏆 I won</button><button class="choice" data-result="loss">I lost</button></div></div><div class="panel"><div class="panel-heading">SECRET TASK</div><div class="choice-row"><button class="choice" data-task="yes">✓ Completed</button><button class="choice" data-task="no">Not completed</button></div></div></div><button class="btn primary full" id="submitResultsBtn">Submit round results</button></section>
+      <section class="screen" id="voteScreen"><div class="eyebrow">THE MATCH IS OVER</div><h2>Who is the imposter?</h2><p class="muted">Choose one player. Your vote stays hidden until everyone has voted.</p><div class="vote-list" id="voteList"></div><button class="btn primary full" id="submitVoteBtn" disabled>Submit my vote</button></section>
+      <section class="screen" id="voteResultsScreen"><div class="eyebrow">VOTING CLOSED</div><h2 id="voteOutcomeTitle">The votes are in.</h2><div class="panel vote-summary" id="voteSummary"></div><div class="panel"><div class="panel-heading">ROUND SCORE CHANGES</div><div id="scoreChanges"></div></div><button class="btn primary full" id="scoreboardBtn">View leaderboard <span>↗</span></button></section>
+      <section class="screen" id="scoreboardScreen"><div class="eyebrow">THE BIG PICTURE</div><h2>Leaderboard</h2><p class="muted">Cumulative points across all completed rounds.</p><div class="panel"><div class="panel-heading">PLAYER STANDINGS <span>POINTS</span></div><div id="scoreboardList"></div></div><div class="lobby-footer"><button class="btn secondary" id="newRoundBtn">Next round</button><button class="btn primary" id="finishGameBtn">Finish game</button></div></section>
+      <section class="screen" id="endScreen"><div class="eyebrow">SESSION COMPLETE</div><h2>That's a wrap.</h2><p class="muted">Final standings are in.</p><div class="panel" id="finalStandings"></div><button class="btn primary full" id="backHomeBtn">Back to home</button></section>
+    </main>
+    <footer>ROCKET LEAGUE MAFIA <span>UNOFFICIAL FAN-MADE PROJECT</span></footer>
+  </div>
+  <div class="toast" id="toast" role="status"></div>
+  <dialog id="helpDialog"><div class="dialog-inner"><button class="dialog-close" id="closeHelp">×</button><div class="eyebrow">ABOUT THIS BUILD</div><h2>Prototype mode</h2><p>This is an interactive visual prototype. It runs locally in one browser and uses sample players. Multiplayer, secure private roles, and persistent scores will be connected through Supabase in the next development step.</p><button class="btn primary full" id="closeHelp2">Got it</button></div></dialog>
+  <script src="app.js"></script>
+</body>
+</html>
