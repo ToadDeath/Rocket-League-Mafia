@@ -9,6 +9,8 @@ const screens = [...document.querySelectorAll(".screen")];
 let currentRoomCode = null;
 let refreshTimer = null;
 let busy = false;
+let currentRoundId = null;
+let assignmentLoadedFor = null;
 
 function show(id) {
   screens.forEach((screen) => screen.classList.toggle("active", screen.id === id));
@@ -72,6 +74,34 @@ async function refreshLobby() {
   }
   $("roomCode").textContent = data.room_code;
   const players = data.players || [];
+
+  // When a round starts, each browser fetches only its own private assignment.
+  if (data.current_round?.status === "playing" && data.current_round.id !== assignmentLoadedFor) {
+    currentRoundId = data.current_round.id;
+    try {
+      const { data: assignment, error: assignmentError } = await db.rpc("get_my_assignment", {
+        p_round_id: currentRoundId
+      });
+      if (assignmentError) throw assignmentError;
+      assignmentLoadedFor = currentRoundId;
+      $("roundNumber").textContent = String(data.current_round.round_number).padStart(2, "0");
+      $("taskRoundNumber").textContent = String(data.current_round.round_number).padStart(2, "0");
+      $("roleTitle").textContent = assignment.role === "imposter" ? "IMPOSTER" : "TEAMMATE";
+      $("roleDescription").textContent = assignment.role === "imposter"
+        ? "Blend in. Complete your secret objective. Avoid suspicion."
+        : "Play your game. Complete your mission. Keep your eyes open.";
+      $("roleSymbol").textContent = assignment.role === "imposter" ? "◆" : "◇";
+      $("roleCard").classList.toggle("imposter", assignment.role === "imposter");
+      $("taskTitle").textContent = assignment.task;
+      $("taskDescription").textContent = "Complete this objective during your Rocket League match.";
+      $("showTaskBtn").onclick = () => show("taskScreen");
+      show("roleScreen");
+      toast("Round started. Your role is ready.");
+    } catch (assignmentError) {
+      console.error(assignmentError);
+      toast("Round started, but your assignment couldn't load: " + assignmentError.message);
+    }
+  }
   $("playerCount").textContent = players.length + (players.length === 1 ? " PLAYER" : " PLAYERS");
   $("playerList").innerHTML = players.map((player, index) =>
     '<div class="player"><div class="avatar">' +
@@ -164,5 +194,20 @@ $("leaveLobbyBtn").onclick = async () => {
     $("leaveLobbyBtn").disabled = false;
   }
 };
-$("startGameBtn").onclick = () => toast("The lobby connection is working. Round gameplay is the next step.");
+$("startGameBtn").onclick = async () => {
+  if (!currentRoomCode || busy) return;
+  setBusy(true, "startGameBtn");
+  try {
+    const { data, error } = await db.rpc("start_round", { p_room_code: currentRoomCode });
+    if (error) throw error;
+    toast("Round " + data.round_number + " started for " + data.players_in_round + " active players.");
+    // Poll immediately so the player who launched also receives their private assignment.
+    await refreshLobby();
+  } catch (error) {
+    console.error(error);
+    toast(error.message || "Couldn't start the round");
+  } finally {
+    setBusy(false, "startGameBtn");
+  }
+};
 window.addEventListener("beforeunload", stopLobbyRefresh);
