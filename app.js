@@ -85,15 +85,12 @@ async function refreshLobby() {
       if (assignmentError) throw assignmentError;
       assignmentLoadedFor = currentRoundId;
       $("roundNumber").textContent = String(data.current_round.round_number).padStart(2, "0");
-      $("taskRoundNumber").textContent = String(data.current_round.round_number).padStart(2, "0");
       $("roleTitle").textContent = assignment.role === "imposter" ? "IMPOSTER" : "TEAMMATE";
       $("roleDescription").textContent = assignment.role === "imposter"
         ? "Blend in. Complete your secret objective. Avoid suspicion."
         : "Play your game. Complete your mission. Keep your eyes open.";
       $("roleSymbol").textContent = assignment.role === "imposter" ? "◆" : "◇";
       $("roleCard").classList.toggle("imposter", assignment.role === "imposter");
-      $("taskTitle").textContent = assignment.task;
-      $("taskDescription").textContent = "Complete this objective during your Rocket League match.";
       $("roleCard").dataset.role = assignment.role;
       $("roleTaskTitle").textContent = assignment.task;
       $("reportRoleLabel").textContent = assignment.role === "imposter" ? "IMPOSTER" : "TEAMMATE";
