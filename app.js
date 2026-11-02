@@ -210,4 +210,58 @@ $("startGameBtn").onclick = async () => {
     setBusy(false, "startGameBtn");
   }
 };
+
+let selectedMatchResult = null;
+let selectedTaskCompleted = null;
+
+$("goResultsBtn").onclick = () => {
+  if (!currentRoundId) return toast("I couldn't find the active round. Refresh the lobby and try again.");
+  $("resultsRound").textContent = $("taskRoundNumber").textContent;
+  selectedMatchResult = null;
+  selectedTaskCompleted = null;
+  document.querySelectorAll("[data-result], [data-task]").forEach((button) => button.classList.remove("selected"));
+  $("submitResultsBtn").disabled = true;
+  show("resultsScreen");
+};
+
+document.querySelectorAll("[data-result]").forEach((button) => {
+  button.onclick = () => {
+    selectedMatchResult = button.dataset.result;
+    document.querySelectorAll("[data-result]").forEach((choice) => choice.classList.toggle("selected", choice === button));
+    $("submitResultsBtn").disabled = selectedMatchResult === null || selectedTaskCompleted === null;
+  };
+});
+document.querySelectorAll("[data-task]").forEach((button) => {
+  button.onclick = () => {
+    selectedTaskCompleted = button.dataset.task === "yes";
+    document.querySelectorAll("[data-task]").forEach((choice) => choice.classList.toggle("selected", choice === button));
+    $("submitResultsBtn").disabled = selectedMatchResult === null || selectedTaskCompleted === null;
+  };
+});
+$("submitResultsBtn").onclick = async () => {
+  if (!currentRoundId || selectedMatchResult === null || selectedTaskCompleted === null || busy) return;
+  setBusy(true, "submitResultsBtn");
+  try {
+    const { data, error } = await db.rpc("submit_round_report", {
+      p_round_id: currentRoundId,
+      p_match_result: selectedMatchResult,
+      p_task_completed: selectedTaskCompleted
+    });
+    if (error) throw error;
+    if (data.voting_open) {
+      toast("All match reports are in. Voting is opening next.");
+    } else {
+      toast("Your results are saved. Waiting for the other players (" +
+        data.reports_received + "/" + data.players_total + ").");
+    }
+    $("submitResultsBtn").textContent = "Results submitted";
+    $("submitResultsBtn").disabled = true;
+  } catch (error) {
+    console.error(error);
+    toast(error.message || "Couldn't submit your results");
+  } finally {
+    setBusy(false, "submitResultsBtn");
+  }
+};
+
 window.addEventListener("beforeunload", stopLobbyRefresh);
