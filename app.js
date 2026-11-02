@@ -75,15 +75,15 @@ async function refreshLobby() {
   $("roomCode").textContent = data.room_code;
   const players = data.players || [];
 
-  // When a round starts, each browser fetches only its own private assignment.
+  if (data.current_round) currentRoundId = data.current_round.id;
+
+  // Load this player's private assignment once, then follow the shared round status.
   if (data.current_round?.status === "playing" && data.current_round.id !== assignmentLoadedFor) {
-    currentRoundId = data.current_round.id;
     try {
       const { data: assignment, error: assignmentError } = await db.rpc("get_my_assignment", {
-        p_round_id: currentRoundId
+        p_round_id: data.current_round.id
       });
       if (assignmentError) throw assignmentError;
-      assignmentLoadedFor = currentRoundId;
       $("roundNumber").textContent = String(data.current_round.round_number).padStart(2, "0");
       $("roleTitle").textContent = assignment.role === "imposter" ? "IMPOSTER" : "TEAMMATE";
       $("roleDescription").textContent = assignment.role === "imposter"
@@ -96,12 +96,17 @@ async function refreshLobby() {
       $("reportRoleLabel").textContent = assignment.role === "imposter" ? "IMPOSTER" : "TEAMMATE";
       $("reportTaskTitle").textContent = assignment.task;
       $("reportSecretCard").classList.toggle("imposter", assignment.role === "imposter");
+      assignmentLoadedFor = data.current_round.id;
       show("roleScreen");
       toast("Round started. Your role is ready.");
     } catch (assignmentError) {
       console.error(assignmentError);
-      toast("Round started, but your assignment couldn't load: " + assignmentError.message);
+      toast("Your assignment couldn't load: " + assignmentError.message);
     }
+  }
+
+  if (data.current_round?.status === "playing" || data.current_round?.status === "voting") {
+    await updateRoundProgress(players, data.current_round.status);
   }
   $("playerCount").textContent = players.length + (players.length === 1 ? " PLAYER" : " PLAYERS");
   $("playerList").innerHTML = players.map((player, index) =>
@@ -214,6 +219,115 @@ $("startGameBtn").onclick = async () => {
 
 let selectedMatchResult = null;
 let selectedTaskCompleted = null;
+let selectedVoteTarget = null;
+let progressBusy = false;
+let finalizingRound = false;
+
+async function updateRoundProgress(players, knownStatus) {
+  if (!currentRoundId || progressBusy) return;
+  progressBusy = true;
+  try {
+    const { data: progress, error } = await db.rpc("get_round_progress", {
+      p_round_id: currentRoundId
+    });
+    if (error) throw error;
+
+    if (progress.status === "playing") {
+      if (progress.my_report_submitted && $("resultsScreen").classList.contains("active")) {
+        $("submitResultsBtn").textContent = "Results submitted";
+        $("submitResultsBtn").disabled = true;
+        $("resultsWaitMessage").textContent =
+          "Your report is saved. Waiting for the other players (" +
+          progress.reports_received + "/" + progress.reports_total + ").";
+      }
+      return;
+    }
+
+    if (progress.status === "voting") {
+      if (!$("voteScreen").classList.contains("active") &&
+          !$("voteResultsScreen").classList.contains("active") &&
+          !$("scoreboardScreen").classList.contains("active")) {
+        show("voteScreen");
+      }
+      $("voteProgress").textContent =
+        "Votes submitted: " + progress.votes_received + " of " + progress.votes_total;
+      $("submitVoteBtn").disabled = progress.my_vote_submitted || !selectedVoteTarget;
+      $("submitVoteBtn").textContent = progress.my_vote_submitted ? "Vote submitted" : "Submit my vote";
+      if (!progress.my_vote_submitted) renderVoteChoices(players);
+      if (progress.votes_total > 0 && progress.votes_received >= progress.votes_total) {
+        await finishRoundAndShowResults();
+      }
+      return;
+    }
+
+    if (progress.status === "completed") {
+      await showRoundResults();
+    }
+  } catch (error) {
+    console.error("Round progress:", error);
+  } finally {
+    progressBusy = false;
+  }
+}
+
+function renderVoteChoices(players) {
+  const list = $("voteList");
+  if (!list || list.dataset.rendered === currentRoundId) return;
+  list.innerHTML = players.map(player =>
+    '<button class="choice vote-choice" type="button" data-vote-target="' +
+    escapeHtml(player.id) + '">' + escapeHtml(player.display_name) + '</button>'
+  ).join("");
+  list.dataset.rendered = currentRoundId;
+  list.querySelectorAll("[data-vote-target]").forEach(button => {
+    button.addEventListener("click", () => {
+      selectedVoteTarget = button.dataset.voteTarget;
+      list.querySelectorAll("[data-vote-target]").forEach(item =>
+        item.classList.toggle("selected", item === button)
+      );
+      $("submitVoteBtn").disabled = false;
+    });
+  });
+}
+
+async function finishRoundAndShowResults() {
+  if (finalizingRound || !currentRoundId) return;
+  finalizingRound = true;
+  try {
+    const { error } = await db.rpc("finalize_round", { p_round_id: currentRoundId });
+    if (error && !/already been finalized/i.test(error.message)) {
+      // Another player's browser may have finalized it first. Confirm below.
+      const { data: state } = await db.rpc("get_round_progress", { p_round_id: currentRoundId });
+      if (state?.status !== "completed") throw error;
+    }
+    await showRoundResults();
+  } catch (error) {
+    console.error(error);
+    toast(error.message || "Couldn't finalize the round");
+  } finally {
+    finalizingRound = false;
+  }
+}
+
+async function showRoundResults() {
+  const { data, error } = await db.rpc("get_round_results", { p_round_id: currentRoundId });
+  if (error) {
+    console.error(error);
+    return;
+  }
+  const names = (data.imposters || []).map(player => player.display_name).join(", ");
+  $("voteOutcomeTitle").textContent = names ? "The imposter was " + names : "The round is complete";
+  $("voteSummary").textContent = names
+    ? "The hidden imposter" + ((data.imposters || []).length > 1 ? "s were " : " was ") + names + "."
+    : "Round results are ready.";
+  $("scoreboardList").innerHTML = (data.leaderboard || []).map((player, index) =>
+    '<div class="player"><div class="avatar">' + (index + 1) +
+    '</div><div class="player-name">' + escapeHtml(player.display_name) +
+    '</div><strong>' + player.score + ' pts</strong></div>'
+  ).join("");
+  show("voteResultsScreen");
+}
+
+
 
 $("goResultsBtn").onclick = () => {
   if (!currentRoundId) return toast("I couldn't find the active round. Refresh the lobby and try again.");
@@ -239,6 +353,44 @@ document.querySelectorAll("[data-task]").forEach((button) => {
     $("submitResultsBtn").disabled = selectedMatchResult === null || selectedTaskCompleted === null;
   };
 });
+$("submitVoteBtn").onclick = async () => {
+  if (!currentRoundId || !selectedVoteTarget || busy) return;
+  setBusy(true, "submitVoteBtn");
+  try {
+    const { error } = await db.rpc("submit_vote", {
+      p_round_id: currentRoundId,
+      p_target_player_id: selectedVoteTarget
+    });
+    if (error) throw error;
+    $("submitVoteBtn").textContent = "Vote submitted";
+    $("submitVoteBtn").disabled = true;
+    toast("Your vote is locked in.");
+    await refreshLobby();
+  } catch (error) {
+    console.error(error);
+    toast(error.message || "Couldn't submit your vote");
+  } finally {
+    setBusy(false, "submitVoteBtn");
+    $("submitVoteBtn").disabled = true;
+  }
+};
+
+$("scoreboardBtn").onclick = () => show("scoreboardScreen");
+$("newRoundBtn").onclick = () => {
+  currentRoundId = null;
+  assignmentLoadedFor = null;
+  selectedVoteTarget = null;
+  show("lobbyScreen");
+  refreshLobby();
+};
+$("finishGameBtn").onclick = () => show("endScreen");
+$("backHomeBtn").onclick = () => {
+  stopLobbyRefresh();
+  currentRoomCode = null;
+  currentRoundId = null;
+  show("homeScreen");
+};
+
 $("submitResultsBtn").onclick = async () => {
   if (!currentRoundId || selectedMatchResult === null || selectedTaskCompleted === null || busy) return;
   setBusy(true, "submitResultsBtn");
@@ -249,14 +401,15 @@ $("submitResultsBtn").onclick = async () => {
       p_task_completed: selectedTaskCompleted
     });
     if (error) throw error;
+    $("submitResultsBtn").textContent = "Results submitted";
+    $("submitResultsBtn").disabled = true;
     if (data.voting_open) {
-      toast("All match reports are in. Voting is opening next.");
+      toast("All reports are in. Voting is opening.");
     } else {
       toast("Your results are saved. Waiting for the other players (" +
         data.reports_received + "/" + data.players_total + ").");
     }
-    $("submitResultsBtn").textContent = "Results submitted";
-    $("submitResultsBtn").disabled = true;
+    await refreshLobby();
   } catch (error) {
     console.error(error);
     toast(error.message || "Couldn't submit your results");
