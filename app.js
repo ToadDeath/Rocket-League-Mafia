@@ -93,6 +93,7 @@ async function refreshLobby() {
       $("reportRoleLabel").textContent = assignment.role === "imposter" ? "IMPOSTER" : "TEAMMATE";
       $("reportTaskTitle").textContent = assignment.task;
       $("reportSecretCard").classList.toggle("imposter", assignment.role === "imposter");
+      $("resultsScreen").classList.toggle("imposter-report", assignment.role === "imposter");
       assignmentLoadedFor = data.current_round.id;
       show("roleScreen");
       toast("Round started. Your role is ready.");
@@ -102,7 +103,7 @@ async function refreshLobby() {
     }
   }
 
-  if (data.current_round?.status === "playing" || data.current_round?.status === "voting") {
+  if (data.current_round?.status === "playing" || data.current_round?.status === "voting" || data.current_round?.status === "completed") {
     await updateRoundProgress(players, data.current_round.status, data.my_player_id);
   }
   $("playerCount").textContent = players.length + (players.length === 1 ? " PLAYER" : " PLAYERS");
