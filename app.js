@@ -1,34 +1,151 @@
-// Visual prototype only. Multiplayer and secure scoring will be added with Supabase.
+// Rocket League Mafia - Supabase lobby connection
+// The publishable key is designed for browser use. Never put a service-role key here.
+const SUPABASE_URL = "https://ugfdvadraznjbhgycuez.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_jWHZ2LnWAX6x74G5vaQbDA_BA56asBB";
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
 const $ = (id) => document.getElementById(id);
 const screens = [...document.querySelectorAll(".screen")];
-const players = [{name:"Player 1",score:0},{name:"OctaneMain",score:0},{name:"AirDribble",score:0},{name:"BoostBandit",score:0}];
-let round=1,me=0,role="teammate",taskDone=null,matchResult=null,selectedVote=null,imposter=2;
-let settings={teammateTask:3,teammateWin:2,correctVote:2,imposterLoss:5,imposterTask:3,imposterVote:2};
-const teammateTasks=["Score a ground pinch","Get 3 saves","Score a ceiling shot","Get a demolition","Score the first goal","Make an aerial goal"];
-const imposterTasks=["Miss a ground pinch","Score an own goal","Lose the match","Get demolished 3 times","Prevent your team from scoring"];
-function show(id){screens.forEach(s=>s.classList.toggle("active",s.id===id));window.scrollTo({top:0,behavior:"smooth"});}
-function toast(msg){$("toast").textContent=msg;$("toast").classList.add("show");setTimeout(()=>$("toast").classList.remove("show"),2200)}
-document.querySelectorAll("[data-back]").forEach(b=>b.onclick=()=>show(b.dataset.back));
-$("createBtn").onclick=()=>show("createScreen");$("joinBtn").onclick=()=>show("joinScreen");
-$("homeLink").onclick=e=>{e.preventDefault();show("homeScreen")};$("helpBtn").onclick=()=>$("helpDialog").showModal();
-$("closeHelp").onclick=$("closeHelp2").onclick=()=>$("helpDialog").close();
-function getSettings(){settings={teammateTask:+$("teammateTaskPts").value,teammateWin:+$("teammateWinPts").value,correctVote:+$("correctVotePts").value,imposterLoss:+$("imposterLossPts").value,imposterTask:+$("imposterTaskPts").value,imposterVote:+$("imposterVotePts").value};}
-$("makeLobbyBtn").onclick=()=>{if(!$("hostName").value.trim())return toast("Enter your player name");players[0].name=$("hostName").value.trim();getSettings();$("roomCode").textContent=Math.random().toString(36).slice(2,8).toUpperCase();renderPlayers();show("lobbyScreen")};
-$("demoJoinBtn").onclick=()=>{if(!$("joinName").value.trim()||!$("roomCodeInput").value.trim())return toast("Enter your name and room code");toast("Multiplayer connection is added in the next build step")};
-$("copyCode").onclick=()=>{navigator.clipboard?.writeText($("roomCode").textContent).then(()=>toast("Room code copied")).catch(()=>toast("Room code: "+$("roomCode").textContent))};
-function renderPlayers(){$("playerCount").textContent=players.length+" PLAYERS";$("playerList").innerHTML=players.map((p,i)=>'<div class="player"><div class="avatar">'+escapeHtml(p.name.slice(0,1).toUpperCase())+'</div><div><div class="player-name">'+escapeHtml(p.name)+'</div><div class="player-status">'+(i===0?"LOBBY CREATOR":"READY")+'</div></div></div>').join("")}
-function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-$("startGameBtn").onclick=startRound;
-function startRound(){imposter=Math.floor(Math.random()*players.length);role=me===imposter?"imposter":"teammate";const pool=role==="imposter"?imposterTasks:teammateTasks;const task=pool[Math.floor(Math.random()*pool.length)];$("roundNumber").textContent=String(round).padStart(2,"0");$("taskRoundNumber").textContent=String(round).padStart(2,"0");$("roleIndex").textContent=String(me+1).padStart(2,"0")+" / "+String(players.length).padStart(2,"0");$("roleTitle").textContent=role.toUpperCase();$("roleDescription").textContent=role==="imposter"?"Blend in. Complete your secret objective. Avoid being identified.":"Play your game. Complete your mission. Find the imposter.";$("roleCard").classList.toggle("imposter",role==="imposter");$("roleSymbol").textContent=role==="imposter"?"✕":"◆";$("taskTitle").textContent=task.toUpperCase();$("taskDescription").textContent="Complete this objective during your Rocket League match.";$("taskCard").classList.toggle("imposter-task",role==="imposter");$("resultsRound").textContent=String(round).padStart(2,"0");show("roleScreen");$("showTaskBtn").onclick=()=>show("taskScreen")}
-document.querySelectorAll("[data-result]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-result]").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");matchResult=b.dataset.result});
-document.querySelectorAll("[data-task]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-task]").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");taskDone=b.dataset.task==="yes"});
-$("goResultsBtn").onclick=()=>{matchResult=null;taskDone=null;document.querySelectorAll(".choice").forEach(x=>x.classList.remove("selected"));show("resultsScreen")};
-$("submitResultsBtn").onclick=()=>{if(!matchResult||taskDone===null)return toast("Select your match result and task result");if(role==="teammate"){if(taskDone)players[me].score+=settings.teammateTask;if(matchResult==="win")players[me].score+=settings.teammateWin}else{if(taskDone)players[me].score+=settings.imposterTask;if(matchResult==="loss")players[me].score+=settings.imposterLoss}selectedVote=null;renderVote();show("voteScreen")};
-function renderVote(){$("voteList").innerHTML=players.map((p,i)=>'<button class="vote-option '+(selectedVote===i?"selected":"")+'" data-vote="'+i+'"><span class="avatar">'+escapeHtml(p.name.slice(0,1).toUpperCase())+'</span><span>'+escapeHtml(p.name)+'</span></button>').join("");document.querySelectorAll("[data-vote]").forEach(b=>b.onclick=()=>{selectedVote=+b.dataset.vote;renderVote();$("submitVoteBtn").disabled=false})}
-$("submitVoteBtn").onclick=()=>{if(selectedVote===null)return;const allVotes=players.map((p,i)=>i===me?selectedVote:(Math.random()<.62?imposter:(i+1)%players.length));resolveVote(allVotes)};
-function resolveVote(allVotes){const counts=players.map((p,i)=>allVotes.filter(v=>v===i).length),max=Math.max(...counts),leaders=counts.map((n,i)=>n===max?i:-1).filter(i=>i>=0);const tie=leaders.length!==1,majority=leaders[0],correct=!tie&&majority===imposter;let imposterAligned=false;if(!tie&&!correct&&allVotes[imposter]===majority){players[imposter].score+=settings.imposterVote;imposterAligned=true}if(correct){players[imposter].score-=settings.imposterLoss;players.forEach((p,i)=>{if(i!==imposter)p.score+=settings.correctVote})}$("voteOutcomeTitle").textContent=tie?"It's a tie.":correct?"The imposter was caught!":"The imposter got away.";const detail=tie?"No voting points awarded.":correct?"Teammates receive their voting bonus. The imposter loses their match-loss points.":imposterAligned?"No teammate voting bonus. The imposter voted with the majority and earns a bonus.":"No voting points awarded.";$("voteSummary").innerHTML='<h3>'+escapeHtml(players[imposter].name)+' was the imposter</h3><p class="muted">'+detail+'</p>';$("scoreChanges").innerHTML=players.map(p=>'<div class="score-line"><span>'+escapeHtml(p.name)+'</span><strong>'+p.score+' pts</strong></div>').join("");show("voteResultsScreen")}
-$("scoreboardBtn").onclick=renderScoreboard;
-function renderScoreboard(){const sorted=[...players].sort((a,b)=>b.score-a.score);$("scoreboardList").innerHTML=sorted.map((p,i)=>'<div class="score-line"><span>'+(i+1)+'. '+escapeHtml(p.name)+'</span><strong>'+p.score+'</strong></div>').join("");show("scoreboardScreen")}
-$("newRoundBtn").onclick=()=>{round++;me=(me+1)%players.length;startRound()};
-$("finishGameBtn").onclick=()=>{$("finalStandings").innerHTML=[...players].sort((a,b)=>b.score-a.score).map((p,i)=>'<div class="score-line"><span>'+(i+1)+'. '+escapeHtml(p.name)+'</span><strong>'+p.score+' pts</strong></div>').join("");show("endScreen")};
-$("backHomeBtn").onclick=()=>{round=1;players.forEach(p=>p.score=0);show("homeScreen")};renderPlayers();
+let currentRoomCode = null;
+let refreshTimer = null;
+let busy = false;
+
+function show(id) {
+  screens.forEach((screen) => screen.classList.toggle("active", screen.id === id));
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+function toast(message) {
+  $("toast").textContent = message;
+  $("toast").classList.add("show");
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => $("toast").classList.remove("show"), 3200);
+}
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+function setBusy(value, buttonId) {
+  busy = value;
+  if (buttonId) {
+    const button = $(buttonId);
+    button.disabled = value;
+    button.dataset.originalText ||= button.textContent;
+    button.textContent = value ? "Connecting..." : button.dataset.originalText;
+  }
+}
+async function ensureSignedIn() {
+  const { data, error } = await db.auth.getSession();
+  if (error) throw error;
+  if (data.session) return data.session;
+  const result = await db.auth.signInAnonymously();
+  if (result.error) throw result.error;
+  return result.data.session;
+}
+function readSettings() {
+  return {
+    imposter_count: Number($("imposterCount").value),
+    teammate_task_points: Number($("teammateTaskPts").value),
+    teammate_win_points: Number($("teammateWinPts").value),
+    correct_vote_points: Number($("correctVotePts").value),
+    imposter_loss_points: Number($("imposterLossPts").value),
+    imposter_task_points: Number($("imposterTaskPts").value),
+    imposter_majority_alignment_bonus: Number($("imposterVotePts").value)
+  };
+}
+function startLobbyRefresh() {
+  stopLobbyRefresh();
+  refreshLobby();
+  refreshTimer = setInterval(refreshLobby, 3000);
+}
+function stopLobbyRefresh() {
+  if (refreshTimer) clearInterval(refreshTimer);
+  refreshTimer = null;
+}
+async function refreshLobby() {
+  if (!currentRoomCode) return;
+  const { data, error } = await db.rpc("get_room_state", { p_room_code: currentRoomCode });
+  if (error) {
+    console.error(error);
+    toast("Couldn't refresh the lobby: " + error.message);
+    return;
+  }
+  $("roomCode").textContent = data.room_code;
+  const players = data.players || [];
+  $("playerCount").textContent = players.length + (players.length === 1 ? " PLAYER" : " PLAYERS");
+  $("playerList").innerHTML = players.map((player, index) =>
+    '<div class="player"><div class="avatar">' +
+    escapeHtml((player.display_name || "?").slice(0, 1).toUpperCase()) +
+    '</div><div><div class="player-name">' + escapeHtml(player.display_name) +
+    '</div><div class="player-status">' + (index === 0 ? "IN THE LOBBY" : "CONNECTED") +
+    '</div></div></div>'
+  ).join("");
+}
+async function createLobby() {
+  const name = $("hostName").value.trim();
+  if (!name) return toast("Enter your player name");
+  setBusy(true, "makeLobbyBtn");
+  try {
+    await ensureSignedIn();
+    const { data, error } = await db.rpc("create_room", {
+      p_display_name: name,
+      p_settings: readSettings()
+    });
+    if (error) throw error;
+    currentRoomCode = data.room_code;
+    $("roomCode").textContent = currentRoomCode;
+    show("lobbyScreen");
+    startLobbyRefresh();
+    toast("Lobby created. Share the room code with your players.");
+  } catch (error) {
+    console.error(error);
+    toast(error.message || "Couldn't create the lobby");
+  } finally {
+    setBusy(false, "makeLobbyBtn");
+  }
+}
+async function joinLobby() {
+  const name = $("joinName").value.trim();
+  const code = $("roomCodeInput").value.trim().toUpperCase();
+  if (!name || !code) return toast("Enter your player name and room code");
+  setBusy(true, "demoJoinBtn");
+  try {
+    await ensureSignedIn();
+    const { data, error } = await db.rpc("join_room", {
+      p_room_code: code,
+      p_display_name: name
+    });
+    if (error) throw error;
+    currentRoomCode = data.room_code;
+    $("roomCode").textContent = currentRoomCode;
+    show("lobbyScreen");
+    startLobbyRefresh();
+    toast("You joined the lobby.");
+  } catch (error) {
+    console.error(error);
+    toast(error.message || "Couldn't join the lobby");
+  } finally {
+    setBusy(false, "demoJoinBtn");
+  }
+}
+
+document.querySelectorAll("[data-back]").forEach((button) => {
+  button.addEventListener("click", () => show(button.dataset.back));
+});
+$("createBtn").onclick = () => show("createScreen");
+$("joinBtn").onclick = () => show("joinScreen");
+$("homeLink").onclick = (event) => { event.preventDefault(); stopLobbyRefresh(); currentRoomCode = null; show("homeScreen"); };
+$("helpBtn").onclick = () => $("helpDialog").showModal();
+$("closeHelp").onclick = $("closeHelp2").onclick = () => $("helpDialog").close();
+$("makeLobbyBtn").onclick = createLobby;
+$("demoJoinBtn").onclick = joinLobby;
+$("copyCode").onclick = async () => {
+  try {
+    await navigator.clipboard.writeText($("roomCode").textContent);
+    toast("Room code copied.");
+  } catch {
+    toast("Room code: " + $("roomCode").textContent);
+  }
+};
+$("startGameBtn").onclick = () => toast("The lobby connection is working. Round gameplay is the next step.");
+window.addEventListener("beforeunload", stopLobbyRefresh);
