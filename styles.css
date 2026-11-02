@@ -18,3 +18,17 @@
   box-shadow:inset 0 0 0 1px #f16b7e;
 }
 .choice{transition:background .15s,border-color .15s,color .15s,box-shadow .15s}
+
+/* For imposters, losing the Rocket League match is the favorable outcome. */
+#resultsScreen.imposter-report .choice[data-result="loss"].selected {
+  border-color:#36c995;
+  background:#123d36;
+  color:#caffeb;
+  box-shadow:inset 0 0 0 1px #36c995;
+}
+#resultsScreen.imposter-report .choice[data-result="win"].selected {
+  border-color:#f16b7e;
+  background:#452432;
+  color:#ffe0e5;
+  box-shadow:inset 0 0 0 1px #f16b7e;
+}
