@@ -413,7 +413,7 @@ returns jsonb
 language plpgsql
 security definer
 set search_path = pg_catalog, public, auth
-as $\
+as $$
 declare
   v_uid uuid := auth.uid();
   v_room_id uuid;
@@ -441,7 +441,7 @@ begin
 
   return jsonb_build_object('imposters',v_imposters,'leaderboard',v_leaderboard);
 end;
-$;
+$$;
 
 -- Only signed-in players can call these controlled functions.
 revoke all on function public.create_room(text,jsonb) from public, anon;
