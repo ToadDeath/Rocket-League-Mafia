@@ -94,7 +94,11 @@ async function refreshLobby() {
       $("roleCard").classList.toggle("imposter", assignment.role === "imposter");
       $("taskTitle").textContent = assignment.task;
       $("taskDescription").textContent = "Complete this objective during your Rocket League match.";
-      $("showTaskBtn").onclick = () => show("taskScreen");
+      $("roleCard").dataset.role = assignment.role;
+      $("roleTaskTitle").textContent = assignment.task;
+      $("reportRoleLabel").textContent = assignment.role === "imposter" ? "IMPOSTER" : "TEAMMATE";
+      $("reportTaskTitle").textContent = assignment.task;
+      $("reportSecretCard").classList.toggle("imposter", assignment.role === "imposter");
       show("roleScreen");
       toast("Round started. Your role is ready.");
     } catch (assignmentError) {
@@ -216,7 +220,7 @@ let selectedTaskCompleted = null;
 
 $("goResultsBtn").onclick = () => {
   if (!currentRoundId) return toast("I couldn't find the active round. Refresh the lobby and try again.");
-  $("resultsRound").textContent = $("taskRoundNumber").textContent;
+  $("resultsRound").textContent = $("roundNumber").textContent;
   selectedMatchResult = null;
   selectedTaskCompleted = null;
   document.querySelectorAll("[data-result], [data-task]").forEach((button) => button.classList.remove("selected"));
