@@ -147,5 +147,22 @@ $("copyCode").onclick = async () => {
     toast("Room code: " + $("roomCode").textContent);
   }
 };
+$("leaveLobbyBtn").onclick = async () => {
+  if (!currentRoomCode) { show("homeScreen"); return; }
+  const code = currentRoomCode;
+  $("leaveLobbyBtn").disabled = true;
+  try {
+    const { error } = await db.rpc("leave_room", { p_room_code: code });
+    if (error) throw error;
+    stopLobbyRefresh();
+    currentRoomCode = null;
+    show("homeScreen");
+    toast("You left the lobby.");
+  } catch (error) {
+    toast(error.message || "Couldn't leave the lobby");
+  } finally {
+    $("leaveLobbyBtn").disabled = false;
+  }
+};
 $("startGameBtn").onclick = () => toast("The lobby connection is working. Round gameplay is the next step.");
 window.addEventListener("beforeunload", stopLobbyRefresh);
