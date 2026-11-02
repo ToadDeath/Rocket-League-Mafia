@@ -263,6 +263,7 @@ declare
   v_imp_bonus integer;
   v_imp_loss integer;
   v_changes jsonb;
+  v_caller_id uuid;
 begin
   if v_uid is null then raise exception 'Sign in is required'; end if;
 
@@ -277,13 +278,12 @@ begin
   if v_status <> 'voting' then raise exception 'This round is not ready to finalize'; end if;
 
   -- The caller is active because this request itself is a check-in.
-  if not exists (
-    update public.players
-    set last_seen_at = now()
-    where room_id = v_room_id and user_id = v_uid and left_at is null
-      and id in (select player_id from public.assignments where round_id = p_round_id)
-    returning id
-  ) then
+  update public.players
+  set last_seen_at = now()
+  where room_id = v_room_id and user_id = v_uid and left_at is null
+    and id in (select player_id from public.assignments where round_id = p_round_id)
+  returning id into v_caller_id;
+  if v_caller_id is null then
     raise exception 'You are not an active player in this round';
   end if;
 
@@ -297,9 +297,12 @@ begin
   select count(*) into v_votes
   from public.votes v
   join public.players p on p.id = v.voter_player_id
+  join public.players target on target.id = v.target_player_id
   where v.round_id = p_round_id
     and p.left_at is null
-    and p.last_seen_at > now() - interval '90 seconds';
+    and p.last_seen_at > now() - interval '90 seconds'
+    and target.left_at is null
+    and target.last_seen_at > now() - interval '90 seconds';
 
   if v_votes <> v_players then raise exception 'Waiting for all active players to vote'; end if;
   if v_players < 2 then raise exception 'Not enough active players remain to finalize this round'; end if;
@@ -309,9 +312,12 @@ begin
     select count(*) n
     from public.votes v
     join public.players p on p.id = v.voter_player_id
+    join public.players target on target.id = v.target_player_id
     where v.round_id = p_round_id
       and p.left_at is null
       and p.last_seen_at > now() - interval '90 seconds'
+      and target.left_at is null
+      and target.last_seen_at > now() - interval '90 seconds'
     group by v.target_player_id
   ) q;
 
@@ -330,9 +336,12 @@ begin
   select v.target_player_id into v_majority
   from public.votes v
   join public.players p on p.id = v.voter_player_id
+  join public.players target on target.id = v.target_player_id
   where v.round_id = p_round_id
     and p.left_at is null
     and p.last_seen_at > now() - interval '90 seconds'
+    and target.left_at is null
+    and target.last_seen_at > now() - interval '90 seconds'
   group by v.target_player_id
   having count(*) = v_max
   limit 1;
