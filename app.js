@@ -220,6 +220,7 @@ let selectedTaskCompleted = null;
 let selectedVoteTarget = null;
 let progressBusy = false;
 let finalizingRound = false;
+let resultsShownFor = null;
 
 async function updateRoundProgress(players, knownStatus, myPlayerId) {
   if (!currentRoundId || progressBusy) return;
@@ -307,25 +308,46 @@ async function finishRoundAndShowResults() {
 }
 
 async function showRoundResults() {
-  const { data, error } = await db.rpc("get_round_results", { p_round_id: currentRoundId });
-  if (error) {
-    console.error(error);
+  if (!currentRoundId) return;
+  if (resultsShownFor === currentRoundId) {
+    show("voteResultsScreen");
     return;
   }
-  const names = (data.imposters || []).map(player => player.display_name).join(", ");
-  $("voteOutcomeTitle").textContent = names ? "The imposter was " + names : "The round is complete";
-  $("voteSummary").textContent = names
-    ? "The hidden imposter" + ((data.imposters || []).length > 1 ? "s were " : " was ") + names + "."
-    : "Round results are ready.";
+  const roundId = currentRoundId;
+  const { data, error } = await db.rpc("get_round_results", { p_round_id: roundId });
+  if (error) {
+    console.error(error);
+    toast("Couldn't load round results: " + error.message);
+    return;
+  }
+  if (currentRoundId !== roundId) return;
+
+  const imposters = data.imposters || [];
+  const names = imposters.map(player => player.display_name).join(", ");
+  $("voteOutcomeTitle").textContent = names ? "The imposter was " + names : "Round complete";
+
+  if (data.tie) {
+    $("voteSummary").textContent = "The vote was tied. No one was identified, so teammates did not receive voting bonus points.";
+  } else if (data.correct_vote) {
+    $("voteSummary").textContent = "Correct guess! " + (data.identified_player || "The imposter") +
+      " was identified. Teammates earned +" + data.teammate_vote_bonus +
+      " bonus points each. The imposter lost the match-loss points.";
+  } else {
+    $("voteSummary").textContent = "Incorrect guess. The group did not identify the imposter, so teammates received no voting bonus.";
+    if (data.imposter_alignment_bonus > 0) {
+      $("voteSummary").textContent += " The imposter earned +" + data.imposter_alignment_bonus +
+        " for voting with the majority.";
+    }
+  }
+
   $("scoreboardList").innerHTML = (data.leaderboard || []).map((player, index) =>
     '<div class="player"><div class="avatar">' + (index + 1) +
     '</div><div class="player-name">' + escapeHtml(player.display_name) +
     '</div><strong>' + player.score + ' pts</strong></div>'
   ).join("");
+  resultsShownFor = roundId;
   show("voteResultsScreen");
 }
-
-
 
 $("goResultsBtn").onclick = () => {
   if (!currentRoundId) return toast("I couldn't find the active round. Refresh the lobby and try again.");
@@ -378,6 +400,7 @@ $("newRoundBtn").onclick = () => {
   currentRoundId = null;
   assignmentLoadedFor = null;
   selectedVoteTarget = null;
+  resultsShownFor = null;
   show("lobbyScreen");
   refreshLobby();
 };
