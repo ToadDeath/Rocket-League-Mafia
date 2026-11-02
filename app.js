@@ -86,9 +86,6 @@ async function refreshLobby() {
       if (assignmentError) throw assignmentError;
       $("roundNumber").textContent = String(data.current_round.round_number).padStart(2, "0");
       $("roleTitle").textContent = assignment.role === "imposter" ? "IMPOSTER" : "TEAMMATE";
-      $("roleDescription").textContent = assignment.role === "imposter"
-        ? "Blend in. Complete your secret objective. Avoid suspicion."
-        : "Play your game. Complete your mission. Keep your eyes open.";
       $("roleSymbol").textContent = assignment.role === "imposter" ? "◆" : "◇";
       $("roleCard").classList.toggle("imposter", assignment.role === "imposter");
       $("roleCard").dataset.role = assignment.role;
