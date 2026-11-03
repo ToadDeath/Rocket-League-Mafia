@@ -392,7 +392,6 @@ $("submitVoteBtn").onclick = async () => {
   }
 };
 
-$("scoreboardBtn").onclick = () => show("scoreboardScreen");
 $("newRoundBtn").onclick = () => {
   currentRoundId = null;
   assignmentLoadedFor = null;
