@@ -258,10 +258,9 @@ async function updateRoundProgress(players, knownStatus, myPlayerId) {
           !$("scoreboardScreen").classList.contains("active")) {
         show("voteScreen");
       }
-      const votesRemaining = Math.max(0, progress.votes_total - progress.votes_received);
       $("voteProgress").textContent = progress.my_vote_submitted
-        ? "Vote recorded · " + votesRemaining + " left"
-        : progress.votes_received + "/" + progress.votes_total + " voted · " + votesRemaining + " left";
+        ? "Vote recorded"
+        : progress.votes_received + "/" + progress.votes_total + " voted";
       $("submitVoteBtn").disabled = progress.my_vote_submitted || !selectedVoteTarget;
       $("submitVoteBtn").textContent = progress.my_vote_submitted ? "Vote submitted" : "Submit vote";
       $("submitVoteBtn").classList.toggle("submitted", progress.my_vote_submitted);
