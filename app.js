@@ -394,11 +394,6 @@ async function showRoundResults() {
     '</div><div class="revealed-role">' + (card.role === "imposter" ? "IMPOSTER" : "TEAMMATE") +
     '</div><div class="revealed-task">' + escapeHtml(card.task_text) + '</div></div>'
   ).join("");
-  $("revealedCards").innerHTML = (data.cards || []).map(card =>
-    '<div class="revealed-role-card ' + (card.role === "imposter" ? "imposter" : "teammate") + '"><div class="revealed-player-name">' + escapeHtml(card.display_name) +
-    '</div><div class="revealed-role">' + (card.role === "imposter" ? "IMPOSTER" : "TEAMMATE") +
-    '</div><div class="revealed-task">' + escapeHtml(card.task_text) + '</div></div>'
-  ).join("");
   resultsShownFor = roundId;
   show("voteResultsScreen");
 }
@@ -442,10 +437,9 @@ $("submitVoteBtn").onclick = async () => {
     await refreshLobby();
   } catch (error) {
     console.error(error);
-    toast(error.message || "Couldn't submit your vote");
-  } finally {
     $("submitVoteBtn").textContent = "Submit my vote";
     $("submitVoteBtn").disabled = false;
+    toast(error.message || "Couldn't submit your vote");
   }
 };
 
