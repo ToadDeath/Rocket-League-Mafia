@@ -518,15 +518,26 @@ async function showFinalStandings() {
   stopLobbyRefresh();
   const { data, error } = await db.rpc("get_game_results", { p_room_code: currentRoomCode });
   if (error) { console.error(error); toast("Could not load final scores: " + error.message); return; }
+  const { data: roomData, error: roomError } = await db.rpc("get_room_state", { p_room_code: currentRoomCode });
+  if (roomError) { console.error(roomError); toast("Could not identify your final result: " + roomError.message); return; }
   const board = data.leaderboard || [];
+  const myPlayerId = roomData.my_player_id;
   const topScore = board.length ? Number(board[0].score) : null;
   const tiedForFirst = board.filter(player => Number(player.score) === topScore);
   const hasSoleWinner = board.length > 0 && tiedForFirst.length === 1;
+  const viewerWon = hasSoleWinner && board[0].player_id === myPlayerId;
   $("finalStandings").innerHTML = board.map((player, index) => {
     const isWinner = hasSoleWinner && index === 0;
-    return '<div class="scoreboard-row ' + (isWinner ? "game-winner" : "") + '"><div class="rank-number">' + (index + 1) +
+    const isMyWin = isWinner && viewerWon;
+    const isTied = tiedForFirst.length > 1 && Number(player.score) === topScore;
+    const rowClass = isMyWin ? "game-winner" : isTied ? "game-tied" : "";
+    const tag = isWinner ? (isMyWin
+      ? ' <span class="you-tag">WINNER</span>'
+      : ' <span class="neutral-tag">WINNER</span>')
+      : isTied ? ' <span class="neutral-tag">TIED</span>' : '';
+    return '<div class="scoreboard-row ' + rowClass + '"><div class="rank-number">' + (index + 1) +
       '</div><div class="scoreboard-player"><strong>' + escapeHtml(player.display_name) +
-      (isWinner ? ' <span class="you-tag">WINNER</span>' : '') + '</strong></div><div class="score-total"><strong>' + player.score + ' pts</strong></div></div>';
+      tag + '</strong></div><div class="score-total"><strong>' + player.score + ' pts</strong></div></div>';
   }).join("");
   $("gameWinnerTitle").textContent = hasSoleWinner
     ? board[0].display_name + " wins!"
