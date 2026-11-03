@@ -73,3 +73,21 @@
 .text-btn{background:transparent;border:0;color:#8299b6;font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;padding:8px}
 .text-btn:hover{color:#e4efff}
 .game-winner{background:#183b35;border:1px solid #36c995}
+
+/* Home screen polish */
+.icon-btn{display:grid;place-items:center;flex:0 0 32px;width:32px;height:32px;padding:0;line-height:1;font-size:17px;overflow:visible}
+.hero-copy,.feature-row{display:none}
+.side-art .ball{left:145px;top:105px;width:110px;height:110px;font-size:0;filter:drop-shadow(0 15px 35px #0009);animation:ball-float 5s ease-in-out infinite}
+.side-art .ball svg{display:block;width:100%;height:100%}
+@keyframes ball-float{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-9px) rotate(5deg)}}
+.floating-card{width:190px;min-height:125px;padding:16px 17px;border-radius:13px;gap:8px;backdrop-filter:blur(8px);box-shadow:0 20px 45px #0008}
+.floating-card small{font-size:8px;letter-spacing:1.7px;font-weight:900}
+.floating-card b{font-size:17px;letter-spacing:.4px}
+.floating-card span{font-size:8px;letter-spacing:1.5px;font-weight:800}
+.card-red{top:30px;right:0;background:linear-gradient(145deg,#58283d,#201d34);border:1px solid #bd5b76}
+.card-blue{bottom:32px;left:0;background:linear-gradient(145deg,#174c68,#14233c);border:1px solid #4aa9c3;transform:rotate(7deg)}
+.art-caption{font-weight:800;letter-spacing:2.2px}
+.lobby-head-actions{display:flex;align-items:center;gap:14px}
+.end-game-link{border:1px solid #a94c68;background:#3d2030;color:#ffb4c2;border-radius:8px;padding:11px 15px;font-size:10px;font-weight:900;letter-spacing:1.1px;text-transform:uppercase;cursor:pointer;transition:background .15s,border-color .15s}
+.end-game-link:hover{background:#56283b;border-color:#e2748e}
+@media(max-width:580px){.lobby-head-actions{width:100%;justify-content:space-between}.end-game-link{padding:10px 12px}.side-art{display:none}}
