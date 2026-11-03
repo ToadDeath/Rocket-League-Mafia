@@ -7,6 +7,7 @@ const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 const $ = (id) => document.getElementById(id);
 const screens = [...document.querySelectorAll(".screen")];
 let currentRoomCode = null;
+let isLobbyCreator = false;
 let refreshTimer = null;
 let busy = false;
 let currentRoundId = null;
@@ -74,6 +75,8 @@ async function refreshLobby() {
   }
   $("roomCode").textContent = data.room_code;
   const players = data.players || [];
+  if (data.room_status === "finished") { await showFinalStandings(); return; }
+  $("endGameBtn").hidden = !isLobbyCreator;
 
   if (data.current_round) currentRoundId = data.current_round.id;
 
@@ -85,11 +88,13 @@ async function refreshLobby() {
       });
       if (assignmentError) throw assignmentError;
       $("roundNumber").textContent = String(data.current_round.round_number).padStart(2, "0");
+      $("rolePlayerName").textContent = assignment.player_name || "";
       $("roleTitle").textContent = assignment.role === "imposter" ? "IMPOSTER" : "TEAMMATE";
       $("roleSymbol").textContent = assignment.role === "imposter" ? "◆" : "◇";
       $("roleCard").classList.toggle("imposter", assignment.role === "imposter");
       $("roleCard").dataset.role = assignment.role;
       $("roleTaskTitle").textContent = assignment.task;
+      $("reportPlayerName").textContent = assignment.player_name || "";
       $("reportRoleLabel").textContent = assignment.role === "imposter" ? "IMPOSTER" : "TEAMMATE";
       $("reportTaskTitle").textContent = assignment.task;
       $("reportSecretCard").classList.toggle("imposter", assignment.role === "imposter");
@@ -248,8 +253,10 @@ async function updateRoundProgress(players, knownStatus, myPlayerId) {
           !$("scoreboardScreen").classList.contains("active")) {
         show("voteScreen");
       }
-      $("voteProgress").textContent =
-        "Votes submitted: " + progress.votes_received + " of " + progress.votes_total;
+      const votesRemaining = Math.max(0, progress.votes_total - progress.votes_received);
+      $("voteProgress").textContent = progress.my_vote_submitted
+        ? "Your vote is in. " + votesRemaining + " players still need to vote."
+        : progress.votes_received + " of " + progress.votes_total + " votes in. " + votesRemaining + " still needed.";
       $("submitVoteBtn").disabled = progress.my_vote_submitted || !selectedVoteTarget;
       $("submitVoteBtn").textContent = progress.my_vote_submitted ? "Vote submitted" : "Submit my vote";
       if (!progress.my_vote_submitted) renderVoteChoices(players, myPlayerId);
