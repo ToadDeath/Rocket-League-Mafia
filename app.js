@@ -321,27 +321,59 @@ async function showRoundResults() {
 
   const imposters = data.imposters || [];
   const names = imposters.map(player => player.display_name).join(", ");
-  $("voteOutcomeTitle").textContent = names ? "The imposter was " + names : "Round complete";
+  const isImposter = data.my_role === "imposter";
+  const success = isImposter ? !data.correct_vote : data.correct_vote;
+  const outcomeCard = $("roundOutcomeCard");
+  outcomeCard.classList.remove("success", "failure", "neutral");
+  outcomeCard.classList.add(success ? "success" : "failure");
 
-  if (data.tie) {
-    $("voteSummary").textContent = "The vote was tied. No one was identified, so teammates did not receive voting bonus points.";
-  } else if (data.correct_vote) {
-    $("voteSummary").textContent = "Correct guess! " + (data.identified_player || "The imposter") +
-      " was identified. Teammates earned +" + data.teammate_vote_bonus +
-      " bonus points each. The imposter lost the match-loss points.";
-  } else {
-    $("voteSummary").textContent = "Incorrect guess. The group did not identify the imposter, so teammates received no voting bonus.";
-    if (data.imposter_alignment_bonus > 0) {
-      $("voteSummary").textContent += " The imposter earned +" + data.imposter_alignment_bonus +
-        " for voting with the majority.";
+  $("voteOutcomeTitle").textContent = isImposter
+    ? (success ? "You fooled the group." : "You were caught.")
+    : (success ? "The imposter was caught." : "The imposter got away.");
+  $("roundOutcomeStatus").textContent = success ? "SUCCESS" : "ROUND FAILED";
+  $("roundOutcomeRole").textContent = isImposter ? "IMPOSTER RESULT" : "TEAMMATE RESULT";
+
+  if (isImposter) {
+    if (data.correct_vote) {
+      $("voteSummary").textContent = names + " was identified by the group. Your cover was blown.";
+    } else if (data.tie) {
+      $("voteSummary").textContent = "The vote was tied. Nobody was identified, so you survived the vote.";
+    } else {
+      $("voteSummary").textContent = "The group voted for " + (data.identified_player || "someone else") +
+        " instead of you. You stayed hidden.";
+      if (data.imposter_alignment_bonus > 0) {
+        $("voteSummary").textContent += " You also earned +" + data.imposter_alignment_bonus +
+          " for voting with the majority.";
+      }
     }
+  } else if (data.correct_vote) {
+    $("voteSummary").textContent = "The group correctly identified " +
+      (data.identified_player || "the imposter") + ". You earned +" +
+      data.teammate_vote_bonus + " voting bonus points.";
+  } else if (data.tie) {
+    $("voteSummary").textContent = "The vote was tied, so the imposter escaped identification. No voting bonus this round.";
+  } else {
+    $("voteSummary").textContent = "The group voted for " +
+      (data.identified_player || "the wrong player") + ". The imposter escaped, and no voting bonus was awarded.";
   }
 
-  $("scoreboardList").innerHTML = (data.leaderboard || []).map((player, index) =>
-    '<div class="player"><div class="avatar">' + (index + 1) +
-    '</div><div class="player-name">' + escapeHtml(player.display_name) +
-    '</div><strong>' + player.score + ' pts</strong></div>'
-  ).join("");
+  const myPoints = Number(data.my_round_points || 0);
+  $("roundPoints").textContent = (myPoints > 0 ? "+" : "") + myPoints + " points this round";
+  $("scoreboardList").innerHTML = (data.leaderboard || []).map((player, index) => {
+    const movement = Number(player.rank_change || 0);
+    const movementText = movement > 0 ? "↑ " + movement : movement < 0 ? "↓ " + Math.abs(movement) : "—";
+    const movementClass = movement > 0 ? "rank-up" : movement < 0 ? "rank-down" : "rank-stay";
+    const roundPoints = Number(player.round_points || 0);
+    const pointsText = (roundPoints > 0 ? "+" : "") + roundPoints;
+    return '<div class="scoreboard-row' + (player.is_you ? ' is-you' : '') + '">' +
+      '<div class="rank-number">' + (index + 1) + '</div>' +
+      '<div class="scoreboard-player"><strong>' + escapeHtml(player.display_name) +
+      (player.is_you ? ' <span class="you-tag">YOU</span>' : '') + '</strong>' +
+      '<small class="' + movementClass + '">' + movementText + ' places</small></div>' +
+      '<div class="score-total"><strong>' + player.score + ' pts</strong>' +
+      '<small class="' + (roundPoints > 0 ? 'points-up' : roundPoints < 0 ? 'points-down' : 'points-zero') +
+      '">' + pointsText + ' this round</small></div></div>';
+  }).join("");
   resultsShownFor = roundId;
   show("voteResultsScreen");
 }
