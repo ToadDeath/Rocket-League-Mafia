@@ -91,3 +91,19 @@
 .end-game-link{border:1px solid #a94c68;background:#3d2030;color:#ffb4c2;border-radius:8px;padding:11px 15px;font-size:10px;font-weight:900;letter-spacing:1.1px;text-transform:uppercase;cursor:pointer;transition:background .15s,border-color .15s}
 .end-game-link:hover{background:#56283b;border-color:#e2748e}
 @media(max-width:580px){.lobby-head-actions{width:100%;justify-content:space-between}.end-game-link{padding:10px 12px}.side-art{display:none}}
+
+/* Main-menu role card previews now match in-game cards */
+.side-art .ball{left:145px;top:105px;width:145px;height:145px;font-size:0;filter:drop-shadow(0 15px 35px #0009);animation:ball-float 5s ease-in-out infinite}
+.side-art .ball svg{display:block;width:100%;height:100%}
+.home-preview-card{position:absolute;width:205px;min-height:205px;padding:15px 16px;border-radius:15px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;box-shadow:0 20px 45px #0009;backdrop-filter:blur(8px);text-align:center}
+.home-preview-card.imposter-preview{top:4px;right:-3px;background:linear-gradient(145deg,#54243a,#211c33);border:1px solid #a94c68;transform:rotate(7deg)}
+.home-preview-card.teammate-preview{bottom:6px;left:-2px;background:linear-gradient(145deg,#173d56,#121d35);border:1px solid #397d99;transform:rotate(-6deg)}
+.preview-card-top{display:flex;justify-content:space-between;gap:12px;width:100%;font-size:7px;letter-spacing:1.2px;font-weight:900;color:#a5dce9}
+.imposter-preview .preview-card-top{color:#ff9caf}
+.preview-player{margin-top:19px;font-size:9px;font-weight:900;letter-spacing:1.5px;color:#d5e4f3}
+.preview-role{font-size:24px;font-weight:950;letter-spacing:1px;margin:15px 0 6px;color:#ff8098}
+.teammate-preview .preview-role{color:#8ce5f0}
+.preview-task{font-size:10px;color:#c5d4e6;line-height:1.5}
+.preview-card-bottom{margin-top:auto;padding-top:18px;font-size:7px;letter-spacing:1.8px;color:#8299b6}
+.art-caption{display:none}
+@media(max-width:850px){.side-art{opacity:.75;right:-90px;top:210px;transform:scale(.8)}}
