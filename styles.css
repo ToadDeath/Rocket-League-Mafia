@@ -107,3 +107,7 @@
 .preview-card-bottom{margin-top:auto;padding-top:18px;font-size:7px;letter-spacing:1.8px;color:#8299b6}
 .art-caption{display:none}
 @media(max-width:850px){.side-art{opacity:.75;right:-90px;top:210px;transform:scale(.8)}}
+
+.btn.submitted{background:#176b57!important;border-color:#269b7b!important;color:#f0fff9!important;box-shadow:0 0 0 2px #269b7b33}
+.btn.submitted:disabled{opacity:1;cursor:default}
+.vote-progress{font-size:12px;font-weight:700;letter-spacing:.3px;margin:8px 0 18px;color:#a9c5dc}
