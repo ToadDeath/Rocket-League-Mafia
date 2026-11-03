@@ -366,7 +366,9 @@ async function showRoundResults() {
 
   const myPoints = Number(data.my_round_points || 0);
   $("roundPoints").textContent = (myPoints > 0 ? "+" : "") + myPoints + " points this round";
+  $("roundPoints").hidden = Number(data.round_number) === 1;
   $("scoreboardList").innerHTML = (data.leaderboard || []).map((player, index) => {
+    const showMovement = Number(data.round_number) > 1;
     const movement = Number(player.rank_change || 0);
     const movementText = movement > 0 ? "↑ " + movement : movement < 0 ? "↓ " + Math.abs(movement) : "—";
     const movementClass = movement > 0 ? "rank-up" : movement < 0 ? "rank-down" : "rank-stay";
@@ -376,10 +378,10 @@ async function showRoundResults() {
       '<div class="rank-number">' + (index + 1) + '</div>' +
       '<div class="scoreboard-player"><strong>' + escapeHtml(player.display_name) +
       (player.is_you ? ' <span class="you-tag">YOU</span>' : '') + '</strong>' +
-      '<small class="' + movementClass + '">' + movementText + ' places</small></div>' +
+      (showMovement ? '<small class="' + movementClass + '">' + movementText + ' places</small>' : '') + '</div>' +
       '<div class="score-total"><strong>' + player.score + ' pts</strong>' +
-      '<small class="' + (roundPoints > 0 ? 'points-up' : roundPoints < 0 ? 'points-down' : 'points-zero') +
-      '">' + pointsText + ' this round</small></div></div>';
+      (showMovement ? '<small class="' + (roundPoints > 0 ? 'points-up' : roundPoints < 0 ? 'points-down' : 'points-zero') +
+      '">' + pointsText + ' this round</small>' : '') + '</div></div>';
   }).join("");
   resultsShownFor = roundId;
   show("voteResultsScreen");
@@ -411,7 +413,8 @@ document.querySelectorAll("[data-task]").forEach((button) => {
 });
 $("submitVoteBtn").onclick = async () => {
   if (!currentRoundId || !selectedVoteTarget || busy) return;
-  setBusy(true, "submitVoteBtn");
+  $("submitVoteBtn").disabled = true;
+  $("submitVoteBtn").textContent = "Vote submitted";
   try {
     const { error } = await db.rpc("submit_vote", {
       p_round_id: currentRoundId,
@@ -420,14 +423,13 @@ $("submitVoteBtn").onclick = async () => {
     if (error) throw error;
     $("submitVoteBtn").textContent = "Vote submitted";
     $("submitVoteBtn").disabled = true;
-    toast("Your vote is locked in.");
     await refreshLobby();
   } catch (error) {
     console.error(error);
     toast(error.message || "Couldn't submit your vote");
   } finally {
-    setBusy(false, "submitVoteBtn");
-    $("submitVoteBtn").disabled = true;
+    $("submitVoteBtn").textContent = "Submit my vote";
+    $("submitVoteBtn").disabled = false;
   }
 };
 
