@@ -258,9 +258,7 @@ async function updateRoundProgress(players, knownStatus, myPlayerId) {
           !$("scoreboardScreen").classList.contains("active")) {
         show("voteScreen");
       }
-      $("voteProgress").textContent = progress.my_vote_submitted
-        ? "Vote recorded"
-        : progress.votes_received + "/" + progress.votes_total + " voted";
+      $("voteProgress").textContent = progress.votes_received + "/" + progress.votes_total;
       $("submitVoteBtn").disabled = progress.my_vote_submitted || !selectedVoteTarget;
       $("submitVoteBtn").textContent = progress.my_vote_submitted ? "Vote submitted" : "Submit vote";
       $("submitVoteBtn").classList.toggle("submitted", progress.my_vote_submitted);
@@ -404,6 +402,9 @@ $("goResultsBtn").onclick = () => {
   selectedTaskCompleted = null;
   document.querySelectorAll("[data-result], [data-task]").forEach((button) => button.classList.remove("selected"));
   $("submitResultsBtn").disabled = true;
+  $("submitResultsBtn").textContent = "Submit";
+  $("submitResultsBtn").classList.remove("submitted");
+  $("resultsWaitMessage").textContent = "";
   show("resultsScreen");
 };
 
@@ -458,12 +459,18 @@ async function showFinalStandings() {
   const { data, error } = await db.rpc("get_game_results", { p_room_code: currentRoomCode });
   if (error) { console.error(error); toast("Could not load final scores: " + error.message); return; }
   const board = data.leaderboard || [];
-  $("finalStandings").innerHTML = board.map((player, index) =>
-    '<div class="scoreboard-row ' + (index === 0 ? "game-winner" : "") + '"><div class="rank-number">' + (index + 1) +
-    '</div><div class="scoreboard-player"><strong>' + escapeHtml(player.display_name) +
-    (index === 0 ? ' <span class="you-tag">WINNER</span>' : '') + '</strong></div><div class="score-total"><strong>' + player.score + ' pts</strong></div></div>'
-  ).join("");
-  $("gameWinnerTitle").textContent = board.length ? board[0].display_name + " wins!" : "Game complete";
+  const topScore = board.length ? Number(board[0].score) : null;
+  const tiedForFirst = board.filter(player => Number(player.score) === topScore);
+  const hasSoleWinner = board.length > 0 && tiedForFirst.length === 1;
+  $("finalStandings").innerHTML = board.map((player, index) => {
+    const isWinner = hasSoleWinner && index === 0;
+    return '<div class="scoreboard-row ' + (isWinner ? "game-winner" : "") + '"><div class="rank-number">' + (index + 1) +
+      '</div><div class="scoreboard-player"><strong>' + escapeHtml(player.display_name) +
+      (isWinner ? ' <span class="you-tag">WINNER</span>' : '') + '</strong></div><div class="score-total"><strong>' + player.score + ' pts</strong></div></div>';
+  }).join("");
+  $("gameWinnerTitle").textContent = hasSoleWinner
+    ? board[0].display_name + " wins!"
+    : tiedForFirst.length > 1 ? "It's a tie!" : "Game complete";
   show("endScreen");
 }
 $("confirmEndGameBtn").onclick = async () => {
