@@ -78,11 +78,6 @@ async function refreshLobby() {
   isLobbyCreator = !!data.is_creator;
   if (data.room_status === "finished") { await showFinalStandings(); return; }
   $("endGameBtn").hidden = !isLobbyCreator;
-  isLobbyCreator = !!data.is_creator;
-  if (data.room_status === "finished") { await showFinalStandings(); return; }
-  $("endGameBtn").hidden = !isLobbyCreator;
-  if (data.room_status === "finished") { await showFinalStandings(); return; }
-  $("endGameBtn").hidden = !isLobbyCreator;
 
   if (data.current_round) currentRoundId = data.current_round.id;
 
