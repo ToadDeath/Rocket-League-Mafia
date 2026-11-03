@@ -25,24 +25,57 @@
         </div>
         <div class="side-art">
           <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
-          <div class="ball" aria-label="Rocket League style ball">
-            <svg viewBox="0 0 200 200" role="img" aria-label="Futuristic Rocket League ball">
-              <defs><radialGradient id="rlBall" cx="34%" cy="28%" r="75%"><stop offset="0" stop-color="#d9f7ff"/><stop offset=".38" stop-color="#6caacb"/><stop offset="1" stop-color="#263e62"/></radialGradient><clipPath id="ballClip"><circle cx="100" cy="100" r="82"/></clipPath></defs>
-              <circle cx="100" cy="100" r="87" fill="#0b1426" opacity=".65"/>
-              <circle cx="100" cy="100" r="82" fill="url(#rlBall)" stroke="#9beaff" stroke-width="3"/>
-              <g clip-path="url(#ballClip)" fill="none" stroke="#d8f6ff" stroke-width="5" opacity=".85">
-                <path d="M100 18 130 40 142 74 126 104 100 115 74 104 58 74 70 40Z"/>
-                <path d="m18 82 40-8 16 30-15 34-39 8M182 82l-40-8-16 30 15 34 39 8M70 40 48 15M130 40l22-25M74 104l-6 49 32 29 32-29-6-49"/>
-                <path d="m58 74-40-7m124 7 40-7M100 18v-22M100 115v67"/>
+          <div class="ball" aria-label="Rocket League ball">
+            <svg viewBox="0 0 220 220" role="img" aria-label="Metallic Rocket League ball with a white glowing light">
+              <defs>
+                <radialGradient id="ballMetal" cx="32%" cy="26%" r="78%"><stop offset="0" stop-color="#b9c5c9"/><stop offset=".34" stop-color="#68777c"/><stop offset=".75" stop-color="#303c43"/><stop offset="1" stop-color="#141c24"/></radialGradient>
+                <radialGradient id="ballPanel" cx="30%" cy="20%" r="90%"><stop offset="0" stop-color="#aebdc2"/><stop offset=".5" stop-color="#62727a"/><stop offset="1" stop-color="#26343d"/></radialGradient>
+                <radialGradient id="whiteGlow"><stop offset="0" stop-color="#fff"/><stop offset=".24" stop-color="#fff"/><stop offset=".52" stop-color="#dffaff"/><stop offset="1" stop-color="#8cecff" stop-opacity="0"/></radialGradient>
+                <pattern id="mesh" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M0 0 8 8M8 0 0 8" stroke="#a9b2b0" stroke-width="1" opacity=".5"/></pattern>
+                <clipPath id="sphereClip"><circle cx="110" cy="110" r="91"/></clipPath>
+              </defs>
+              <ellipse cx="110" cy="198" rx="72" ry="12" fill="#000" opacity=".3"/>
+              <circle cx="110" cy="110" r="94" fill="#101820" stroke="#c3c3b3" stroke-width="4"/>
+              <g clip-path="url(#sphereClip)">
+                <circle cx="110" cy="110" r="91" fill="url(#ballMetal)"/>
+                <path d="M-5 26 Q75 5 122 24 L128 196 Q64 220 3 173Z" fill="#252d30" stroke="#c5c0a9" stroke-width="5"/>
+                <path d="M-5 26 Q75 5 122 24 L128 196 Q64 220 3 173Z" fill="url(#mesh)" opacity=".9"/>
+                <path d="M125 12 Q178 20 211 72 L220 145 Q197 190 139 207 L125 190Z" fill="url(#ballPanel)" stroke="#a5a99f" stroke-width="5"/>
+                <g fill="none" stroke="#c1c9c6" stroke-width="3" opacity=".65">
+                  <path d="M134 37 195 52 217 88M131 72 202 84 220 119M130 109 199 119 215 155M132 147 188 157 202 184"/>
+                  <path d="M152 23 147 190M178 31 173 198M201 53 195 177"/>
+                </g>
+                <path d="M100 28 131 38 147 65 132 95 101 104 78 82 80 52Z" fill="#323c40" stroke="#c3bca7" stroke-width="4"/>
+                <path d="M92 39 117 44 130 65 116 82 93 78 82 59Z" fill="#141d24" stroke="#8f9997" stroke-width="3"/>
+                <path d="M28 80 65 65 83 87 77 121 45 135 22 113Z" fill="#343b3a" stroke="#b7b19c" stroke-width="4"/>
+                <path d="M35 87 63 76 74 91 69 115 46 124 31 108Z" fill="#1b2529" stroke="#929b97" stroke-width="2"/>
+                <path d="M83 63 105 48 127 61 130 85 109 103 84 91Z" fill="#3a4140" stroke="#b7b19c" stroke-width="3"/>
+                <path d="M91 66 106 58 120 66 121 82 107 92 92 84Z" fill="#151f25"/>
+                <path d="M43 135 78 124 103 146 91 179 56 186 32 163Z" fill="#3a4140" stroke="#b7b19c" stroke-width="4"/>
+                <path d="M53 143 76 136 91 150 83 170 59 175 43 159Z" fill="#1b2529" stroke="#8e9893" stroke-width="2"/>
+                <path d="M68 75 84 68 94 82 89 103 72 108 61 94Z" fill="#b9b4a1" stroke="#3b4140" stroke-width="3"/>
+                <circle cx="76" cy="89" r="17" fill="#fff" opacity=".12"/>
+                <circle cx="76" cy="89" r="14" fill="url(#whiteGlow)"/>
+                <circle cx="76" cy="89" r="7" fill="#fff" stroke="#e4faff" stroke-width="2"/>
+                <path d="M62 75 49 67 43 94 58 104M88 75 103 66 108 92 94 105" fill="#9da49d" stroke="#333c40" stroke-width="3"/>
               </g>
-              <g fill="#17324f" opacity=".7"><path d="m100 37 19 14-7 23H88l-7-23z"/><path d="m66 91 20-14 14 15-8 23-24-2z"/><path d="m134 91-20-14-14 15 8 23 24-2z"/></g>
-              <circle cx="100" cy="100" r="82" fill="none" stroke="#b7f1ff" stroke-width="2" opacity=".55"/>
+              <circle cx="110" cy="110" r="92" fill="none" stroke="#d5d0bd" stroke-width="2" opacity=".65"/>
             </svg>
           </div>
-          <div class="floating-card card-red"><small>CLASSIFIED ROLE</small><b>IMPOSTER</b><span>RED TEAM</span></div>
-          <div class="floating-card card-blue"><small>YOUR SECRET TASK</small><b>GROUND PINCH</b><span>TEAMMATE</span></div>
-          <div class="art-caption">TRUST NO ONE.</div>
-        </div>
+          <div class="home-preview-card imposter-preview">
+            <div class="preview-card-top"><span>CLASSIFIED</span><span>KEEP PRIVATE</span></div>
+            <div class="preview-player">PLAYER NAME</div>
+            <div class="preview-role">IMPOSTER</div>
+            <div class="preview-task">Secret objective hidden</div>
+            <div class="preview-card-bottom">IMPOSTER CARD</div>
+          </div>
+          <div class="home-preview-card teammate-preview">
+            <div class="preview-card-top"><span>CLASSIFIED</span><span>KEEP PRIVATE</span></div>
+            <div class="preview-player">PLAYER NAME</div>
+            <div class="preview-role">TEAMMATE</div>
+            <div class="preview-task">Complete your secret task</div>
+            <div class="preview-card-bottom">TEAMMATE CARD</div>
+          </div>        </div>
       </section>
       <section class="screen" id="createScreen">
         <button class="back-link" data-back="homeScreen">← Back</button><div class="narrow">
