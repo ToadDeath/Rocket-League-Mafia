@@ -358,8 +358,10 @@ async function showRoundResults() {
     }
   } else if (data.correct_vote) {
     $("voteSummary").textContent = "The group correctly identified " +
-      (data.identified_player || "the imposter") + ". You earned +" +
-      data.teammate_vote_bonus + " voting bonus points.";
+      (data.identified_player || "the imposter") +
+      (Number(data.teammate_vote_bonus) > 0
+        ? ". You earned +" + data.teammate_vote_bonus + " voting bonus points."
+        : ". You didn't vote for the imposter, so you didn't earn the voting bonus.");
   } else if (data.tie) {
     $("voteSummary").textContent = "The vote was tied, so the imposter escaped identification. No voting bonus this round.";
   } else {
