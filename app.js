@@ -75,6 +75,9 @@ async function refreshLobby() {
   }
   $("roomCode").textContent = data.room_code;
   const players = data.players || [];
+  isLobbyCreator = !!data.is_creator;
+  if (data.room_status === "finished") { await showFinalStandings(); return; }
+  $("endGameBtn").hidden = !isLobbyCreator;
   if (data.room_status === "finished") { await showFinalStandings(); return; }
   $("endGameBtn").hidden = !isLobbyCreator;
 
@@ -383,6 +386,11 @@ async function showRoundResults() {
       (showMovement ? '<small class="' + (roundPoints > 0 ? 'points-up' : roundPoints < 0 ? 'points-down' : 'points-zero') +
       '">' + pointsText + ' this round</small>' : '') + '</div></div>';
   }).join("");
+  $("revealedCards").innerHTML = (data.cards || []).map(card =>
+    '<div class="revealed-role-card ' + (card.role === "imposter" ? "imposter" : "teammate") + '"><div class="revealed-player-name">' + escapeHtml(card.display_name) +
+    '</div><div class="revealed-role">' + (card.role === "imposter" ? "IMPOSTER" : "TEAMMATE") +
+    '</div><div class="revealed-task">' + escapeHtml(card.task_text) + '</div></div>'
+  ).join("");
   resultsShownFor = roundId;
   show("voteResultsScreen");
 }
@@ -440,7 +448,31 @@ $("newRoundBtn").onclick = () => {
   show("lobbyScreen");
   refreshLobby();
 };
-$("finishGameBtn").onclick = () => show("endScreen");
+
+async function showFinalStandings() {
+  const { data, error } = await db.rpc("get_game_results", { p_room_code: currentRoomCode });
+  if (error) { console.error(error); toast("Could not load final scores: " + error.message); return; }
+  const board = data.leaderboard || [];
+  $("finalStandings").innerHTML = board.map((player, index) =>
+    '<div class="scoreboard-row ' + (index === 0 ? "game-winner" : "") + '"><div class="rank-number">' + (index + 1) +
+    '</div><div class="scoreboard-player"><strong>' + escapeHtml(player.display_name) +
+    (index === 0 ? ' <span class="you-tag">WINNER</span>' : '') + '</strong></div><div class="score-total"><strong>' + player.score + ' pts</strong></div></div>'
+  ).join("");
+  $("gameWinnerTitle").textContent = board.length ? board[0].display_name + " wins!" : "Game complete";
+  show("endScreen");
+}
+$("confirmEndGameBtn").onclick = async () => {
+  $("confirmEndGameBtn").disabled = true;
+  try {
+    const { error } = await db.rpc("end_game", { p_room_code: currentRoomCode });
+    if (error) throw error;
+    $("endGameDialog").close();
+    await showFinalStandings();
+  } catch (error) { toast(error.message || "Could not end the game"); }
+  finally { $("confirmEndGameBtn").disabled = false; }
+};
+$("cancelEndGameBtn").onclick = () => $("endGameDialog").close();
+$("endGameBtn").onclick = () => $("endGameDialog").showModal();
 $("backHomeBtn").onclick = () => {
   stopLobbyRefresh();
   currentRoomCode = null;
