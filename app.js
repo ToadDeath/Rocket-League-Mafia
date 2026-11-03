@@ -452,6 +452,7 @@ $("newRoundBtn").onclick = () => {
 };
 
 async function showFinalStandings() {
+  stopLobbyRefresh();
   const { data, error } = await db.rpc("get_game_results", { p_room_code: currentRoomCode });
   if (error) { console.error(error); toast("Could not load final scores: " + error.message); return; }
   const board = data.leaderboard || [];
