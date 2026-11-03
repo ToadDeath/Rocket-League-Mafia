@@ -530,7 +530,8 @@ async function showFinalStandings() {
     const isWinner = hasSoleWinner && index === 0;
     const isMyWin = isWinner && viewerWon;
     const isTied = tiedForFirst.length > 1 && Number(player.score) === topScore;
-    const rowClass = isMyWin ? "game-winner" : isTied ? "game-tied" : "";
+    const isMe = player.player_id === myPlayerId;
+    const rowClass = isMyWin ? "game-winner" : isTied ? "game-tied" : isMe ? "game-self" : "";
     const tag = isWinner ? (isMyWin
       ? ' <span class="you-tag">WINNER</span>'
       : ' <span class="neutral-tag">WINNER</span>')
