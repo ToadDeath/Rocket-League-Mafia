@@ -1,5 +1,37 @@
--- Role-specific round results with per-round score changes and leaderboard movement.
+-- Role-specific round results with exact score changes and leaderboard movement.
 -- Run this in the Supabase SQL Editor after the existing round-results-feedback migration.
+-- Score snapshots are captured automatically when a round's assignments are created.
+
+create table if not exists public.round_score_snapshots (
+  round_id uuid not null references public.rounds(id) on delete cascade,
+  player_id uuid not null references public.players(id) on delete cascade,
+  score_before integer not null,
+  primary key (round_id, player_id)
+);
+
+alter table public.round_score_snapshots enable row level security;
+revoke all on public.round_score_snapshots from public, anon, authenticated;
+
+create or replace function public.capture_round_score_snapshot()
+returns trigger
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+begin
+  insert into public.round_score_snapshots(round_id, player_id, score_before)
+  select new.round_id, p.id, p.score
+  from public.players p
+  where p.id = new.player_id
+  on conflict (round_id, player_id) do nothing;
+  return new;
+end;
+$$;
+
+drop trigger if exists assignments_capture_score_snapshot on public.assignments;
+create trigger assignments_capture_score_snapshot
+after insert on public.assignments
+for each row execute function public.capture_round_score_snapshot();
 
 create or replace function public.get_round_results(p_round_id uuid)
 returns jsonb
@@ -93,40 +125,17 @@ begin
   join public.players p on p.id = a.player_id
   where a.round_id = p_round_id and a.role = 'imposter';
 
-  with round_deltas as (
-    select
-      p.id as player_id,
-      case
-        when a.role = 'teammate' then
-          (case when rr.task_completed then coalesce((v_settings->>'teammate_task_points')::integer, 3) else 0 end) +
-          (case when rr.match_result = 'win' then coalesce((v_settings->>'teammate_win_points')::integer, 2) else 0 end) +
-          (case when v_correct then coalesce((v_settings->>'correct_vote_points')::integer, 2) else 0 end)
-        else
-          (case when rr.task_completed then coalesce((v_settings->>'imposter_task_points')::integer, 3) else 0 end) +
-          (case when rr.match_result = 'loss' then coalesce((v_settings->>'imposter_loss_points')::integer, 5) else 0 end) -
-          (case when v_correct then coalesce((v_settings->>'imposter_loss_points')::integer, 5) else 0 end) +
-          (case when not v_tie and not v_correct and exists (
-            select 1 from public.votes v
-            where v.round_id = p_round_id
-              and v.voter_player_id = p.id
-              and v.target_player_id = v_majority
-          ) then coalesce((v_settings->>'imposter_majority_alignment_bonus')::integer, 2) else 0 end)
-      end::integer as delta
-    from public.assignments a
-    join public.players p on p.id = a.player_id
-    join public.round_reports rr on rr.round_id = a.round_id and rr.player_id = a.player_id
-    where a.round_id = p_round_id
-  ),
-  standings as (
+  with standings as (
     select
       p.id,
       p.display_name,
       p.score,
-      coalesce(d.delta, 0) as delta,
+      coalesce(p.score - snap.score_before, 0) as delta,
       row_number() over (order by p.score desc, p.display_name asc) as rank_after,
-      row_number() over (order by (p.score - coalesce(d.delta, 0)) desc, p.display_name asc) as rank_before
+      row_number() over (order by coalesce(snap.score_before, p.score) desc, p.display_name asc) as rank_before
     from public.players p
-    left join round_deltas d on d.player_id = p.id
+    left join public.round_score_snapshots snap
+      on snap.player_id = p.id and snap.round_id = p_round_id
     where p.room_id = v_room_id
   )
   select
