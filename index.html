@@ -18,13 +18,32 @@
     <main>
       <section class="screen active" id="homeScreen">
         <div class="hero">
-          <div class="eyebrow"><span class="pulse"></span> ROCKET LEAGUE PARTY GAME</div>
+          <div class="eyebrow"><span class="pulse"></span> ROCKET LEAGUE MAFIA</div>
           <h1>Trust your<br><span class="gradient-text">teammates?</span></h1>
-          <p class="hero-copy">Complete your task. Find the imposter.</p>
+          
           <div class="home-actions"><button class="btn primary" id="createBtn">Create a lobby <span>↗</span></button><button class="btn secondary" id="joinBtn">Join a game</button></div>
-          <div class="feature-row"><div><strong>01</strong><span>Get your role</span></div><div><strong>02</strong><span>Complete your task</span></div><div><strong>03</strong><span>Find the imposter</span></div></div>
+          
         </div>
-        <div class="side-art"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="ball">⚽</div><div class="floating-card card-red"><small>CLASSIFIED</small><b>IMPOSTER</b><span>01 / ???</span></div><div class="floating-card card-blue"><small>MISSION</small><b>GROUND PINCH</b><span>COMPLETE IT</span></div><div class="art-caption">EVERY PLAYER HAS A SECRET.</div></div>
+        <div class="side-art">
+          <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+          <div class="ball" aria-label="Rocket League style ball">
+            <svg viewBox="0 0 200 200" role="img" aria-label="Futuristic Rocket League ball">
+              <defs><radialGradient id="rlBall" cx="34%" cy="28%" r="75%"><stop offset="0" stop-color="#d9f7ff"/><stop offset=".38" stop-color="#6caacb"/><stop offset="1" stop-color="#263e62"/></radialGradient><clipPath id="ballClip"><circle cx="100" cy="100" r="82"/></clipPath></defs>
+              <circle cx="100" cy="100" r="87" fill="#0b1426" opacity=".65"/>
+              <circle cx="100" cy="100" r="82" fill="url(#rlBall)" stroke="#9beaff" stroke-width="3"/>
+              <g clip-path="url(#ballClip)" fill="none" stroke="#d8f6ff" stroke-width="5" opacity=".85">
+                <path d="M100 18 130 40 142 74 126 104 100 115 74 104 58 74 70 40Z"/>
+                <path d="m18 82 40-8 16 30-15 34-39 8M182 82l-40-8-16 30 15 34 39 8M70 40 48 15M130 40l22-25M74 104l-6 49 32 29 32-29-6-49"/>
+                <path d="m58 74-40-7m124 7 40-7M100 18v-22M100 115v67"/>
+              </g>
+              <g fill="#17324f" opacity=".7"><path d="m100 37 19 14-7 23H88l-7-23z"/><path d="m66 91 20-14 14 15-8 23-24-2z"/><path d="m134 91-20-14-14 15 8 23 24-2z"/></g>
+              <circle cx="100" cy="100" r="82" fill="none" stroke="#b7f1ff" stroke-width="2" opacity=".55"/>
+            </svg>
+          </div>
+          <div class="floating-card card-red"><small>CLASSIFIED ROLE</small><b>IMPOSTER</b><span>RED TEAM</span></div>
+          <div class="floating-card card-blue"><small>YOUR SECRET TASK</small><b>GROUND PINCH</b><span>TEAMMATE</span></div>
+          <div class="art-caption">TRUST NO ONE.</div>
+        </div>
       </section>
       <section class="screen" id="createScreen">
         <button class="back-link" data-back="homeScreen">← Back</button><div class="narrow">
@@ -37,7 +56,7 @@
         </div>
       </section>
       <section class="screen" id="joinScreen"><button class="back-link" data-back="homeScreen">← Back</button><div class="narrow"><div class="eyebrow">JUMP IN</div><h2>Join a lobby</h2><label class="field-label">Your player name<input id="joinName" maxlength="18" placeholder="Enter your name"></label><label class="field-label">Room code<input id="roomCodeInput" maxlength="6" placeholder="ABC123" class="code-input"></label><button class="btn primary full" id="demoJoinBtn">Join game <span>↗</span></button></div></section>
-      <section class="screen" id="lobbyScreen"><div class="lobby-head"><div><div class="eyebrow">WAITING ROOM</div><h2>Game lobby</h2></div><div class="room-code"><small>ROOM CODE</small><strong id="roomCode">RLMAFI</strong><button id="copyCode">COPY</button></div></div><div class="panel"><div class="panel-heading">PLAYERS <span id="playerCount">4 PLAYERS</span></div><div class="player-list" id="playerList"></div></div><div class="lobby-footer"><div class="home-actions"><button class="btn secondary" id="leaveLobbyBtn">Leave lobby</button><button class="btn primary" id="startGameBtn">Start round <span>↗</span></button></div><button class="text-btn" id="endGameBtn" hidden>End game</button></div></section>
+      <section class="screen" id="lobbyScreen"><div class="lobby-head"><div><div class="eyebrow">WAITING ROOM</div><h2>Game lobby</h2></div><div class="lobby-head-actions"><div class="room-code"><small>ROOM CODE</small><strong id="roomCode">RLMAFI</strong><button id="copyCode">COPY</button></div><button class="end-game-link" id="endGameBtn" hidden>End game</button></div></div><div class="panel"><div class="panel-heading">PLAYERS <span id="playerCount">4 PLAYERS</span></div><div class="player-list" id="playerList"></div></div><div class="lobby-footer"><div class="home-actions"><button class="btn secondary" id="leaveLobbyBtn">Leave lobby</button><button class="btn primary" id="startGameBtn">Start round <span>↗</span></button></div></div></section>
       <section class="screen" id="roleScreen"><div class="round-label">ROUND <span id="roundNumber">01</span></div><div class="reveal-wrap"><div class="eyebrow">YOUR ROLE</div><div class="role-card" id="roleCard"><div class="card-top"><span>CLASSIFIED</span><span>KEEP PRIVATE</span></div><div class="card-player-name" id="rolePlayerName"></div><div class="role-symbol" id="roleSymbol">◆</div><h2 id="roleTitle">TEAMMATE</h2><p id="roleTaskTitle" class="secret-task-title">SCORE A GROUND PINCH</p><div class="card-bottom">KEEP THIS SECRET</div></div><button class="btn primary full" id="goResultsBtn">Continue after match <span>↗</span></button></div></section>
       
       <section class="screen" id="resultsScreen"><div class="eyebrow">ROUND <span id="resultsRound">01</span> COMPLETE</div><h2>How did it go?</h2><p class="muted tiny" id="resultsWaitMessage"></p><div class="role-card report-secret-card" id="reportSecretCard"><div class="card-top"><span id="reportRoleLabel">TEAMMATE</span></div><div class="card-player-name" id="reportPlayerName"></div><h2 id="reportTaskTitle">SCORE A GROUND PINCH</h2><div class="card-bottom">KEEP IT PRIVATE</div></div><div class="result-options"><div class="panel"><div class="panel-heading">MATCH RESULT</div><div class="choice-row"><button class="choice" data-result="win">Won</button><button class="choice" data-result="loss">Lost</button></div></div><div class="panel"><div class="panel-heading">SECRET TASK</div><div class="choice-row"><button class="choice" data-task="yes">Completed</button><button class="choice" data-task="no">Not completed</button></div></div></div><button class="btn primary full" id="submitResultsBtn">Submit</button></section>
