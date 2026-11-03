@@ -111,3 +111,14 @@
 .btn.submitted{background:#176b57!important;border-color:#269b7b!important;color:#f0fff9!important;box-shadow:0 0 0 2px #269b7b33}
 .btn.submitted:disabled{opacity:1;cursor:default}
 .vote-progress{font-size:12px;font-weight:700;letter-spacing:.3px;margin:8px 0 18px;color:#a9c5dc}
+
+.task-selection-help{margin:0 0 16px}
+.task-selection-columns{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.task-group-heading{font-size:9px;letter-spacing:1.5px;font-weight:800;color:var(--cyan);margin-bottom:9px}
+.task-options{display:grid;gap:7px;max-height:250px;overflow:auto;padding-right:5px}
+.task-option{display:flex;align-items:flex-start;gap:9px;padding:9px 10px;border:1px solid var(--line);border-radius:7px;background:#0e1829;color:var(--text);font-size:12px;line-height:1.4;cursor:pointer}
+.task-option:has(input:checked){border-color:#426c91;background:#14253a}
+.task-option input{accent-color:var(--cyan);margin:2px 0 0;flex:0 0 auto}
+.task-selection-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.task-selection-footer .btn{padding:11px 14px}
+@media(max-width:650px){.task-selection-columns{grid-template-columns:1fr}.task-selection-footer{align-items:flex-start;flex-direction:column}.task-selection-footer .btn{width:100%}}
