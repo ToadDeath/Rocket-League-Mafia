@@ -8,6 +8,7 @@ const $ = (id) => document.getElementById(id);
 const screens = [...document.querySelectorAll(".screen")];
 let currentRoomCode = null;
 let isLobbyCreator = false;
+let taskLibraryLoadedFor = null;
 let refreshTimer = null;
 let busy = false;
 let currentRoundId = null;
@@ -78,6 +79,10 @@ async function refreshLobby() {
   isLobbyCreator = !!data.is_creator;
   if (data.room_status === "finished") { await showFinalStandings(); return; }
   $("endGameBtn").hidden = !isLobbyCreator;
+  $("taskSelectionPanel").hidden = !isLobbyCreator || data.room_status !== "waiting";
+  if (isLobbyCreator && data.room_status === "waiting" && taskLibraryLoadedFor !== currentRoomCode) {
+    await loadLobbyTasks();
+  }
 
   if (data.current_round) currentRoundId = data.current_round.id;
 
@@ -121,6 +126,56 @@ async function refreshLobby() {
     '</div></div></div>'
   ).join("");
 }
+
+async function loadLobbyTasks() {
+  if (!currentRoomCode || !isLobbyCreator) return;
+  const { data, error } = await db.rpc("get_lobby_tasks", { p_room_code: currentRoomCode });
+  if (error) {
+    console.error(error);
+    toast("Couldn't load the task list: " + error.message);
+    return;
+  }
+  const tasks = data.tasks || [];
+  const renderTasks = (role, targetId) => {
+    const items = tasks.filter(task => task.role === role);
+    $(targetId).innerHTML = items.map(task =>
+      '<label class="task-option"><input type="checkbox" data-task-id="' + escapeHtml(task.id) +
+      '"' + (task.selected ? " checked" : "") + '><span>' + escapeHtml(task.task_text) + '</span></label>'
+    ).join("") || '<p class="muted tiny">No tasks available.</p>';
+  };
+  renderTasks("teammate", "teammateTaskList");
+  renderTasks("imposter", "imposterTaskList");
+  $("taskSelectionCounts").textContent =
+    tasks.filter(task => task.role === "teammate" && task.selected).length + " teammate · " +
+    tasks.filter(task => task.role === "imposter" && task.selected).length + " imposter tasks selected";
+  taskLibraryLoadedFor = currentRoomCode;
+}
+$("saveTaskSelectionBtn").onclick = async () => {
+  if (!currentRoomCode || busy) return;
+  const selectedIds = [...document.querySelectorAll("#taskSelectionPanel input[data-task-id]:checked")]
+    .map(input => input.dataset.taskId);
+  const button = $("saveTaskSelectionBtn");
+  button.disabled = true;
+  const originalText = button.textContent;
+  button.textContent = "Saving...";
+  try {
+    const { error } = await db.rpc("save_task_selection", {
+      p_room_code: currentRoomCode,
+      p_task_ids: selectedIds
+    });
+    if (error) throw error;
+    taskLibraryLoadedFor = null;
+    await loadLobbyTasks();
+    toast("Task selection saved.");
+  } catch (error) {
+    console.error(error);
+    toast(error.message || "Couldn't save task selection");
+  } finally {
+    button.disabled = false;
+    button.textContent = originalText;
+  }
+};
+
 async function createLobby() {
   const name = $("hostName").value.trim();
   if (!name) return toast("Enter your player name");
@@ -133,6 +188,7 @@ async function createLobby() {
     });
     if (error) throw error;
     currentRoomCode = data.room_code;
+    taskLibraryLoadedFor = null;
     $("roomCode").textContent = currentRoomCode;
     show("lobbyScreen");
     startLobbyRefresh();
@@ -157,6 +213,7 @@ async function joinLobby() {
     });
     if (error) throw error;
     currentRoomCode = data.room_code;
+    taskLibraryLoadedFor = null;
     $("roomCode").textContent = currentRoomCode;
     show("lobbyScreen");
     startLobbyRefresh();
@@ -174,7 +231,7 @@ document.querySelectorAll("[data-back]").forEach((button) => {
 });
 $("createBtn").onclick = () => show("createScreen");
 $("joinBtn").onclick = () => show("joinScreen");
-$("homeLink").onclick = (event) => { event.preventDefault(); stopLobbyRefresh(); currentRoomCode = null; show("homeScreen"); };
+$("homeLink").onclick = (event) => { event.preventDefault(); stopLobbyRefresh(); currentRoomCode = null; taskLibraryLoadedFor = null; show("homeScreen"); };
 $("helpBtn").onclick = () => $("helpDialog").showModal();
 $("closeHelp").onclick = $("closeHelp2").onclick = () => $("helpDialog").close();
 $("makeLobbyBtn").onclick = createLobby;
@@ -199,6 +256,7 @@ $("leaveLobbyBtn").onclick = async () => {
     if (error) throw error;
     stopLobbyRefresh();
     currentRoomCode = null;
+    taskLibraryLoadedFor = null;
     show("homeScreen");
     toast("You left the lobby.");
   } catch (error) {
