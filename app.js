@@ -78,6 +78,9 @@ async function refreshLobby() {
   isLobbyCreator = !!data.is_creator;
   if (data.room_status === "finished") { await showFinalStandings(); return; }
   $("endGameBtn").hidden = !isLobbyCreator;
+  isLobbyCreator = !!data.is_creator;
+  if (data.room_status === "finished") { await showFinalStandings(); return; }
+  $("endGameBtn").hidden = !isLobbyCreator;
   if (data.room_status === "finished") { await showFinalStandings(); return; }
   $("endGameBtn").hidden = !isLobbyCreator;
 
@@ -386,6 +389,11 @@ async function showRoundResults() {
       (showMovement ? '<small class="' + (roundPoints > 0 ? 'points-up' : roundPoints < 0 ? 'points-down' : 'points-zero') +
       '">' + pointsText + ' this round</small>' : '') + '</div></div>';
   }).join("");
+  $("revealedCards").innerHTML = (data.cards || []).map(card =>
+    '<div class="revealed-role-card ' + (card.role === "imposter" ? "imposter" : "teammate") + '"><div class="revealed-player-name">' + escapeHtml(card.display_name) +
+    '</div><div class="revealed-role">' + (card.role === "imposter" ? "IMPOSTER" : "TEAMMATE") +
+    '</div><div class="revealed-task">' + escapeHtml(card.task_text) + '</div></div>'
+  ).join("");
   $("revealedCards").innerHTML = (data.cards || []).map(card =>
     '<div class="revealed-role-card ' + (card.role === "imposter" ? "imposter" : "teammate") + '"><div class="revealed-player-name">' + escapeHtml(card.display_name) +
     '</div><div class="revealed-role">' + (card.role === "imposter" ? "IMPOSTER" : "TEAMMATE") +
