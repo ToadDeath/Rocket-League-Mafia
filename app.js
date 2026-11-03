@@ -179,6 +179,9 @@ $("helpBtn").onclick = () => $("helpDialog").showModal();
 $("closeHelp").onclick = $("closeHelp2").onclick = () => $("helpDialog").close();
 $("makeLobbyBtn").onclick = createLobby;
 $("demoJoinBtn").onclick = joinLobby;
+["joinName", "roomCodeInput"].forEach(id => $(id).addEventListener("keydown", event => {
+  if (event.key === "Enter") { event.preventDefault(); joinLobby(); }
+}));
 $("copyCode").onclick = async () => {
   try {
     await navigator.clipboard.writeText($("roomCode").textContent);
@@ -239,7 +242,8 @@ async function updateRoundProgress(players, knownStatus, myPlayerId) {
 
     if (progress.status === "playing") {
       if (progress.my_report_submitted && $("resultsScreen").classList.contains("active")) {
-        $("submitResultsBtn").textContent = "Results submitted";
+        $("submitResultsBtn").textContent = "Submitted";
+    $("submitResultsBtn").classList.add("submitted");
         $("submitResultsBtn").disabled = true;
         $("resultsWaitMessage").textContent =
           "Your report is saved. Waiting for the other players (" +
@@ -256,10 +260,11 @@ async function updateRoundProgress(players, knownStatus, myPlayerId) {
       }
       const votesRemaining = Math.max(0, progress.votes_total - progress.votes_received);
       $("voteProgress").textContent = progress.my_vote_submitted
-        ? "Your vote is in. " + votesRemaining + " players still need to vote."
-        : progress.votes_received + " of " + progress.votes_total + " votes in. " + votesRemaining + " still needed.";
+        ? "Vote recorded · " + votesRemaining + " left"
+        : progress.votes_received + "/" + progress.votes_total + " voted · " + votesRemaining + " left";
       $("submitVoteBtn").disabled = progress.my_vote_submitted || !selectedVoteTarget;
-      $("submitVoteBtn").textContent = progress.my_vote_submitted ? "Vote submitted" : "Submit my vote";
+      $("submitVoteBtn").textContent = progress.my_vote_submitted ? "Vote submitted" : "Submit vote";
+      $("submitVoteBtn").classList.toggle("submitted", progress.my_vote_submitted);
       if (!progress.my_vote_submitted) renderVoteChoices(players, myPlayerId);
       if (progress.votes_total > 0 && progress.votes_received >= progress.votes_total) {
         await finishRoundAndShowResults();
@@ -421,6 +426,7 @@ $("submitVoteBtn").onclick = async () => {
   if (!currentRoundId || !selectedVoteTarget || busy) return;
   $("submitVoteBtn").disabled = true;
   $("submitVoteBtn").textContent = "Vote submitted";
+  $("submitVoteBtn").classList.add("submitted");
   try {
     const { error } = await db.rpc("submit_vote", {
       p_round_id: currentRoundId,
@@ -428,11 +434,13 @@ $("submitVoteBtn").onclick = async () => {
     });
     if (error) throw error;
     $("submitVoteBtn").textContent = "Vote submitted";
+    $("submitVoteBtn").classList.add("submitted");
     $("submitVoteBtn").disabled = true;
     await refreshLobby();
   } catch (error) {
     console.error(error);
-    $("submitVoteBtn").textContent = "Submit my vote";
+    $("submitVoteBtn").textContent = "Submit vote";
+    $("submitVoteBtn").classList.remove("submitted");
     $("submitVoteBtn").disabled = false;
     toast(error.message || "Couldn't submit your vote");
   }
@@ -505,7 +513,8 @@ $("submitResultsBtn").onclick = async () => {
   } finally {
     setBusy(false, "submitResultsBtn");
     if (reportSubmitted) {
-      $("submitResultsBtn").textContent = "Results submitted";
+      $("submitResultsBtn").textContent = "Submitted";
+      $("submitResultsBtn").classList.add("submitted");
       $("submitResultsBtn").disabled = true;
     }
   }
