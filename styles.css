@@ -59,3 +59,17 @@
 .scoreboard-player small.rank-stay{color:#91a3bc}
 .you-tag{font-size:8px;letter-spacing:1px;color:#69d9e8;background:#183e50;padding:3px 5px;border-radius:4px}
 @media(max-width:480px){.scoreboard-row{gap:7px;padding:10px 5px}.scoreboard-player strong,.score-total strong{font-size:11px}.scoreboard-player small,.score-total small{font-size:9px}}
+
+.card-player-name{font-size:15px;font-weight:900;letter-spacing:1.2px;text-transform:uppercase;color:#f0f7ff;margin:20px 0 0}
+.report-secret-card .card-player-name{margin-top:15px}
+.revealed-cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.revealed-role-card{border:1px solid #397d99;background:linear-gradient(145deg,#173d56,#121d35);border-radius:10px;padding:15px;text-align:center}
+.revealed-role-card.imposter{border-color:#a94c68;background:linear-gradient(145deg,#54243a,#211c33)}
+.revealed-player-name{font-weight:900;font-size:13px;color:#f0f7ff;margin-bottom:9px}
+.revealed-role{font-size:9px;letter-spacing:1.5px;font-weight:900;color:#8ce5f0}
+.revealed-role-card.imposter .revealed-role{color:#ff8098}
+.revealed-task{font-size:11px;line-height:1.5;color:#c5d4e6;margin-top:9px}
+.revealed-cards-panel{margin-top:18px}
+.text-btn{background:transparent;border:0;color:#8299b6;font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;padding:8px}
+.text-btn:hover{color:#e4efff}
+.game-winner{background:#183b35;border:1px solid #36c995}
