@@ -138,7 +138,8 @@ begin
         'round_points', delta,
         'rank_before', rank_before,
         'rank_after', rank_after,
-        'rank_change', rank_before - rank_after
+        'rank_change', rank_before - rank_after,
+        'is_you', id = v_my_player_id
       ) order by rank_after
     ), '[]'::jsonb),
     coalesce(max(delta) filter (where id = v_my_player_id), 0)
