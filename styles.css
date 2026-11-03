@@ -32,3 +32,30 @@
   color:#ffe0e5;
   box-shadow:inset 0 0 0 1px #f16b7e;
 }
+
+
+/* Role-specific round outcome and leaderboard movement */
+.result-banner{border:1px solid #40516c;text-align:left;padding:20px}
+.result-banner.success{background:linear-gradient(135deg,#103b32,#12263a);border-color:#36c995}
+.result-banner.failure{background:linear-gradient(135deg,#452432,#241d32);border-color:#f16b7e}
+.result-banner-top{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:10px;letter-spacing:1.5px;color:#aebed4;font-weight:900}
+.result-banner-top strong{font-size:11px;color:#36c995}
+.result-banner.failure .result-banner-top strong{color:#ff8098}
+.result-banner p{color:#d5dfed;font-size:13px;line-height:1.6;margin:14px 0}
+.round-points{font-size:19px;font-weight:900;color:#72e3b8;border-top:1px solid #ffffff20;padding-top:13px}
+.result-banner.failure .round-points{color:#ff9aaa}
+.scoreboard-row{display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 10px;border-top:1px solid #26334a;border-radius:7px}
+.scoreboard-row.is-you{background:#172b40;box-shadow:inset 3px 0 #52c9df}
+.rank-number{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#22334b;color:#b9c9dc;font-weight:900;font-size:11px}
+.scoreboard-player,.score-total{display:flex;flex-direction:column;gap:4px}
+.scoreboard-player strong,.score-total strong{font-size:12px}
+.scoreboard-player small,.score-total small{font-size:10px;color:#91a3bc}
+.score-total{text-align:right}
+.score-total small.points-up{color:#58d9a6}
+.score-total small.points-down{color:#ff8497}
+.score-total small.points-zero{color:#91a3bc}
+.scoreboard-player small.rank-up{color:#58d9a6}
+.scoreboard-player small.rank-down{color:#ff8497}
+.scoreboard-player small.rank-stay{color:#91a3bc}
+.you-tag{font-size:8px;letter-spacing:1px;color:#69d9e8;background:#183e50;padding:3px 5px;border-radius:4px}
+@media(max-width:480px){.scoreboard-row{gap:7px;padding:10px 5px}.scoreboard-player strong,.score-total strong{font-size:11px}.scoreboard-player small,.score-total small{font-size:9px}}
