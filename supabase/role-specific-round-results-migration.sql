@@ -55,11 +55,13 @@ declare
   v_leaderboard jsonb := '[]'::jsonb;
   v_identified_name text;
   v_my_delta integer := 0;
+  v_round_number integer;
+  v_cards jsonb := '[]'::jsonb;
 begin
   if v_uid is null then raise exception 'Sign in is required'; end if;
 
-  select r.room_id, r.status, rm.settings
-    into v_room_id, v_status, v_settings
+  select r.room_id, r.status, rm.settings, r.round_number
+    into v_room_id, v_status, v_settings, v_round_number
   from public.rounds r
   join public.rooms rm on rm.id = r.room_id
   where r.id = p_round_id;
@@ -125,6 +127,17 @@ begin
   join public.players p on p.id = a.player_id
   where a.round_id = p_round_id and a.role = 'imposter';
 
+  select coalesce(jsonb_agg(
+    jsonb_build_object('player_id', p.id, 'display_name', p.display_name,
+      'role', a.role, 'task_text', t.task_text)
+    order by p.display_name
+  ), '[]'::jsonb)
+  into v_cards
+  from public.assignments a
+  join public.players p on p.id = a.player_id
+  join public.tasks t on t.id = a.task_id
+  where a.round_id = p_round_id;
+
   with standings as (
     select
       p.id,
@@ -162,6 +175,8 @@ begin
     'identified_player', v_identified_name,
     'imposters', v_imposters,
     'my_role', v_my_role,
+    'round_number', v_round_number,
+    'cards', v_cards,
     'my_round_points', v_my_delta,
     'teammate_vote_bonus', case when v_correct then coalesce((v_settings->>'correct_vote_points')::integer, 2) else 0 end,
     'imposter_alignment_bonus', case
@@ -180,3 +195,130 @@ $$;
 
 revoke all on function public.get_round_results(uuid) from public, anon;
 grant execute on function public.get_round_results(uuid) to authenticated;
+
+
+-- Return the caller's own assignment, including their player name.
+create or replace function public.get_my_assignment(p_round_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = pg_catalog, public, auth
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_result jsonb;
+begin
+  if v_uid is null then raise exception 'Sign in is required'; end if;
+  select jsonb_build_object(
+    'role', a.role, 'task', t.task_text, 'player_name', p.display_name,
+    'task_completed', a.task_completed, 'round_status', r.status,
+    'round_number', r.round_number
+  )
+  into v_result
+  from public.assignments a
+  join public.players p on p.id = a.player_id
+  join public.tasks t on t.id = a.task_id
+  join public.rounds r on r.id = a.round_id
+  where a.round_id = p_round_id and p.user_id = v_uid;
+  if v_result is null then raise exception 'No assignment found for you in this round'; end if;
+  return v_result;
+end;
+$$;
+
+-- Include whether the caller created the room in lobby state.
+create or replace function public.get_room_state(p_room_code text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = pg_catalog, public, auth
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_room public.rooms%rowtype;
+  v_me uuid;
+  v_round public.rounds%rowtype;
+begin
+  if v_uid is null then raise exception 'Sign in is required'; end if;
+  select * into v_room from public.rooms where code = upper(trim(p_room_code));
+  if not found then raise exception 'Room not found'; end if;
+  update public.players set last_seen_at = now()
+  where room_id = v_room.id and user_id = v_uid and left_at is null
+  returning id into v_me;
+  if v_me is null then raise exception 'You are not an active member of this lobby'; end if;
+  select * into v_round from public.rounds where room_id = v_room.id
+    order by round_number desc limit 1;
+  return jsonb_build_object(
+    'room_code', v_room.code, 'room_status', v_room.status,
+    'settings', v_room.settings, 'my_player_id', v_me,
+    'is_creator', v_room.created_by = v_uid,
+    'players', coalesce((
+      select jsonb_agg(jsonb_build_object('id',p.id,'display_name',p.display_name,'score',p.score)
+        order by p.joined_at)
+      from public.players p
+      where p.room_id = v_room.id and p.left_at is null
+        and p.last_seen_at > now() - interval '90 seconds'
+    ), '[]'::jsonb),
+    'current_round', case when v_round.id is null then null else
+      jsonb_build_object('id',v_round.id,'round_number',v_round.round_number,'status',v_round.status)
+    end
+  );
+end;
+$$;
+
+-- The room creator alone can end the shared game, and only between rounds.
+create or replace function public.end_game(p_room_code text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = pg_catalog, public, auth
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_room public.rooms%rowtype;
+begin
+  if v_uid is null then raise exception 'Sign in is required'; end if;
+  select * into v_room from public.rooms
+  where code = upper(trim(p_room_code)) for update;
+  if not found then raise exception 'Room not found'; end if;
+  if v_room.created_by <> v_uid then raise exception 'Only the lobby creator can end the game'; end if;
+  if exists (select 1 from public.rounds where room_id = v_room.id and status <> 'completed') then
+    raise exception 'Finish the current round before ending the game';
+  end if;
+  update public.rooms set status = 'finished' where id = v_room.id;
+  return jsonb_build_object('ended', true);
+end;
+$$;
+
+create or replace function public.get_game_results(p_room_code text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = pg_catalog, public, auth
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_room_id uuid;
+  v_status text;
+  v_board jsonb;
+begin
+  if v_uid is null then raise exception 'Sign in is required'; end if;
+  select id, status into v_room_id, v_status from public.rooms
+  where code = upper(trim(p_room_code));
+  if v_room_id is null then raise exception 'Room not found'; end if;
+  if not exists (select 1 from public.players where room_id = v_room_id and user_id = v_uid) then
+    raise exception 'You are not in this room';
+  end if;
+  if v_status <> 'finished' then raise exception 'The game has not ended'; end if;
+  select coalesce(jsonb_agg(
+    jsonb_build_object('player_id', id, 'display_name', display_name, 'score', score)
+    order by score desc, display_name
+  ), '[]'::jsonb) into v_board
+  from public.players where room_id = v_room_id;
+  return jsonb_build_object('leaderboard', v_board);
+end;
+$$;
+
+revoke all on function public.end_game(text) from public, anon;
+revoke all on function public.get_game_results(text) from public, anon;
+grant execute on function public.end_game(text) to authenticated;
+grant execute on function public.get_game_results(text) to authenticated;
