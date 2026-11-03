@@ -127,3 +127,6 @@
 .game-winner{background:#183b35;border:1px solid #36c995}
 .game-tied{background:#17263a;border:1px solid #40516c}
 .neutral-tag{font-size:8px;letter-spacing:1px;color:#c3d2e5;background:#26364c;padding:3px 5px;border-radius:4px}
+
+/* Subtle personal marker on final standings, without implying a win. */
+.game-self{background:#172438;border:1px solid #30445f}
