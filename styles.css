@@ -122,3 +122,8 @@
 .task-selection-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
 .task-selection-footer .btn{padding:11px 14px}
 @media(max-width:650px){.task-selection-columns{grid-template-columns:1fr}.task-selection-footer{align-items:flex-start;flex-direction:column}.task-selection-footer .btn{width:100%}}
+
+/* Final standings: green only when the current viewer personally wins. */
+.game-winner{background:#183b35;border:1px solid #36c995}
+.game-tied{background:#17263a;border:1px solid #40516c}
+.neutral-tag{font-size:8px;letter-spacing:1px;color:#c3d2e5;background:#26364c;padding:3px 5px;border-radius:4px}
