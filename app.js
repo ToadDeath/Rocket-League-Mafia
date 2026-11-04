@@ -134,7 +134,7 @@ async function refreshLobby() {
 }
 
 async function loadLobbyTasks() {
-  if (!currentRoomCode || taskSelectionEditing) return;
+  if (!currentRoomCode) return;
   const { data, error } = await db.rpc("get_lobby_tasks", { p_room_code: currentRoomCode });
   if (error) {
     console.error(error);
