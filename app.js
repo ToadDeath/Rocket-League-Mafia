@@ -9,6 +9,7 @@ const screens = [...document.querySelectorAll(".screen")];
 let currentRoomCode = null;
 let isLobbyCreator = false;
 let taskLibraryLoadedFor = null;
+let taskSelectionEditing = false;
 let refreshTimer = null;
 let busy = false;
 let currentRoundId = null;
@@ -79,10 +80,15 @@ async function refreshLobby() {
   isLobbyCreator = !!data.is_creator;
   if (data.room_status === "finished") { await showFinalStandings(); return; }
   $("endGameBtn").hidden = !isLobbyCreator;
-  $("taskSelectionPanel").hidden = !isLobbyCreator || data.room_status !== "waiting";
-  if (isLobbyCreator && data.room_status === "waiting" && taskLibraryLoadedFor !== currentRoomCode) {
+  $("taskSelectionPanel").hidden = data.room_status !== "waiting";
+  $("editTaskSelectionBtn").hidden = !isLobbyCreator;
+  if (data.room_status !== "waiting") {
+    taskSelectionEditing = false;
+  } else if (!taskSelectionEditing) {
+    // Keep the read-only list current for everyone when the host changes it.
     await loadLobbyTasks();
   }
+  updateTaskSelectionMode();
 
   if (data.current_round) currentRoundId = data.current_round.id;
 
@@ -128,7 +134,7 @@ async function refreshLobby() {
 }
 
 async function loadLobbyTasks() {
-  if (!currentRoomCode || !isLobbyCreator) return;
+  if (!currentRoomCode || taskSelectionEditing) return;
   const { data, error } = await db.rpc("get_lobby_tasks", { p_room_code: currentRoomCode });
   if (error) {
     console.error(error);
@@ -138,20 +144,42 @@ async function loadLobbyTasks() {
   const tasks = data.tasks || [];
   const renderTasks = (role, targetId) => {
     const items = tasks.filter(task => task.role === role);
-    $(targetId).innerHTML = items.map(task =>
-      '<label class="task-option"><input type="checkbox" data-task-id="' + escapeHtml(task.id) +
-      '"' + (task.selected ? " checked" : "") + '><span>' + escapeHtml(task.task_text) + '</span></label>'
+    $(targetId).innerHTML = items.map(task => taskSelectionEditing && isLobbyCreator
+      ? '<label class="task-option"><input type="checkbox" data-task-id="' + escapeHtml(task.id) +
+        '"' + (task.selected ? " checked" : "") + '><span>' + escapeHtml(task.task_text) + '</span></label>'
+      : '<div class="task-option task-option-readonly' + (task.selected ? ' is-selected' : '') + '"><span>' +
+        escapeHtml(task.task_text) + '</span><small>' + (task.selected ? 'IN ROTATION' : 'AVAILABLE') + '</small></div>'
     ).join("") || '<p class="muted tiny">No tasks available.</p>';
   };
   renderTasks("teammate", "teammateTaskList");
   renderTasks("imposter", "imposterTaskList");
   $("taskSelectionCounts").textContent =
     tasks.filter(task => task.role === "teammate" && task.selected).length + " teammate · " +
-    tasks.filter(task => task.role === "imposter" && task.selected).length + " imposter tasks selected";
+    tasks.filter(task => task.role === "imposter" && task.selected).length + " imposter tasks in rotation";
   taskLibraryLoadedFor = currentRoomCode;
 }
+function updateTaskSelectionMode() {
+  $("taskSelectionHelp").textContent = taskSelectionEditing
+    ? "Choose which tasks can be dealt. Each player gets a different task each round."
+    : "Everyone can see the available tasks. Tasks marked IN ROTATION can be assigned this game.";
+  $("editTaskSelectionBtn").hidden = !isLobbyCreator || taskSelectionEditing;
+  $("saveTaskSelectionBtn").hidden = !taskSelectionEditing;
+  $("cancelTaskSelectionBtn").hidden = !taskSelectionEditing;
+  $("taskSelectionPanel").classList.toggle("is-editing", taskSelectionEditing);
+}
+$("editTaskSelectionBtn").onclick = async () => {
+  if (!isLobbyCreator) return;
+  taskSelectionEditing = true;
+  await loadLobbyTasks();
+  updateTaskSelectionMode();
+};
+$("cancelTaskSelectionBtn").onclick = async () => {
+  taskSelectionEditing = false;
+  await loadLobbyTasks();
+  updateTaskSelectionMode();
+};
 $("saveTaskSelectionBtn").onclick = async () => {
-  if (!currentRoomCode || busy) return;
+  if (!currentRoomCode || !isLobbyCreator || !taskSelectionEditing || busy) return;
   const selectedIds = [...document.querySelectorAll("#taskSelectionPanel input[data-task-id]:checked")]
     .map(input => input.dataset.taskId);
   const button = $("saveTaskSelectionBtn");
@@ -164,8 +192,10 @@ $("saveTaskSelectionBtn").onclick = async () => {
       p_task_ids: selectedIds
     });
     if (error) throw error;
+    taskSelectionEditing = false;
     taskLibraryLoadedFor = null;
     await loadLobbyTasks();
+    updateTaskSelectionMode();
     toast("Task selection saved.");
   } catch (error) {
     console.error(error);
