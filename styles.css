@@ -130,3 +130,13 @@
 
 /* Subtle personal marker on final standings, without implying a win. */
 .game-self{background:#172438;border:1px solid #30445f}
+
+/* Shared task list with host-only edit mode */
+.task-option-readonly{justify-content:space-between;align-items:center;gap:10px;cursor:default}
+.task-option-readonly small{flex:0 0 auto;font-size:8px;letter-spacing:.8px;font-weight:900;color:#8299b6}
+.task-option-readonly.is-selected{border-color:#356c78;background:#122b38}
+.task-option-readonly.is-selected small{color:#75dfc0}
+.task-selection-actions{display:flex;align-items:center;gap:8px}
+.task-selection-actions .btn{padding:11px 14px}
+.task-selection-panel:not(.is-editing) .task-selection-footer{justify-content:space-between}
+@media(max-width:650px){.task-selection-actions{width:100%;flex-direction:column}.task-selection-actions .btn{width:100%}}
