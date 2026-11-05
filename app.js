@@ -10,6 +10,7 @@ let currentRoomCode = null;
 let isLobbyCreator = false;
 let taskLibraryLoadedFor = null;
 let taskSelectionEditing = false;
+let taskPanelExpanded = false;
 let refreshTimer = null;
 let busy = false;
 let currentRoundId = null;
@@ -82,10 +83,11 @@ async function refreshLobby() {
   $("endGameBtn").hidden = !isLobbyCreator;
   $("startGameBtn").hidden = !isLobbyCreator;
   $("newRoundBtn").hidden = !isLobbyCreator;
-  $("taskSelectionPanel").hidden = data.room_status !== "waiting";
-  $("editTaskSelectionBtn").hidden = !isLobbyCreator;
+  $("toggleTaskPanelBtn").hidden = data.room_status !== "waiting";
+  $("taskSelectionPanel").hidden = data.room_status !== "waiting" || !taskPanelExpanded;
   if (data.room_status !== "waiting") {
     taskSelectionEditing = false;
+    taskPanelExpanded = false;
   } else if (!taskSelectionEditing) {
     // Keep the read-only list current for everyone when the host changes it.
     await loadLobbyTasks();
@@ -156,8 +158,8 @@ async function loadLobbyTasks() {
   renderTasks("teammate", "teammateTaskList");
   renderTasks("imposter", "imposterTaskList");
   $("taskSelectionCounts").textContent =
-    tasks.filter(task => task.role === "teammate" && task.selected).length + " teammate · " +
-    tasks.filter(task => task.role === "imposter" && task.selected).length + " imposter tasks in rotation";
+    tasks.filter(task => task.role === "teammate" && task.selected).length + " teammate tasks · " +
+    tasks.filter(task => task.role === "imposter" && task.selected).length + " imposter tasks selected";
   taskLibraryLoadedFor = currentRoomCode;
 }
 function updateTaskSelectionMode() {
@@ -166,6 +168,13 @@ function updateTaskSelectionMode() {
   $("cancelTaskSelectionBtn").hidden = !taskSelectionEditing;
   $("taskSelectionPanel").classList.toggle("is-editing", taskSelectionEditing);
 }
+$("toggleTaskPanelBtn").onclick = () => {
+  if (!isLobbyCreator && taskSelectionEditing) return;
+  taskPanelExpanded = !taskPanelExpanded;
+  $("taskSelectionPanel").hidden = !taskPanelExpanded;
+  $("toggleTaskPanelBtn").textContent = taskPanelExpanded ? "Hide task rotation" : "View task rotation";
+  $("toggleTaskPanelBtn").setAttribute("aria-expanded", String(taskPanelExpanded));
+};
 $("editTaskSelectionBtn").onclick = async () => {
   if (!isLobbyCreator) return;
   taskSelectionEditing = true;
@@ -218,8 +227,12 @@ async function createLobby() {
     if (error) throw error;
     currentRoomCode = data.room_code;
     taskLibraryLoadedFor = null;
+    taskPanelExpanded = false;
+    $("toggleTaskPanelBtn").textContent = "View task rotation";
+    $("toggleTaskPanelBtn").setAttribute("aria-expanded", "false");
+    $("toggleTaskPanelBtn").hidden = false;
+    $("taskSelectionPanel").hidden = true;
     $("roomCode").textContent = currentRoomCode;
-    $("taskSelectionPanel").hidden = false;
     show("lobbyScreen");
     loadLobbyTasks();
     startLobbyRefresh();
@@ -245,8 +258,12 @@ async function joinLobby() {
     if (error) throw error;
     currentRoomCode = data.room_code;
     taskLibraryLoadedFor = null;
+    taskPanelExpanded = false;
+    $("toggleTaskPanelBtn").textContent = "View task rotation";
+    $("toggleTaskPanelBtn").setAttribute("aria-expanded", "false");
+    $("toggleTaskPanelBtn").hidden = false;
+    $("taskSelectionPanel").hidden = true;
     $("roomCode").textContent = currentRoomCode;
-    $("taskSelectionPanel").hidden = false;
     show("lobbyScreen");
     loadLobbyTasks();
     startLobbyRefresh();
@@ -436,33 +453,26 @@ async function showRoundResults() {
 
   if (isImposter) {
     if (data.correct_vote) {
-      $("voteSummary").textContent = names + " was identified by the group. Your cover was blown.";
+      $("voteSummary").textContent = "The group identified you as the imposter.";
     } else if (data.tie) {
-      $("voteSummary").textContent = "The vote was tied. Nobody was identified, so you survived the vote.";
+      $("voteSummary").textContent = "The vote was tied. No player was identified.";
     } else {
-      $("voteSummary").textContent = "The group voted for " + (data.identified_player || "someone else") +
-        " instead of you. You stayed hidden.";
-      if (data.imposter_alignment_bonus > 0) {
-        $("voteSummary").textContent += " You also earned +" + data.imposter_alignment_bonus +
-          " for voting with the majority.";
-      }
+      $("voteSummary").textContent = "The group voted for " +
+        (data.identified_player || "another player") + ". You avoided being identified.";
     }
   } else if (data.correct_vote) {
-    $("voteSummary").textContent = "The group correctly identified " +
-      (data.identified_player || "the imposter") +
-      (Number(data.teammate_vote_bonus) > 0
-        ? ". You earned +" + data.teammate_vote_bonus + " voting bonus points."
-        : ". You didn't vote for the imposter, so you didn't earn the voting bonus.");
+    $("voteSummary").textContent = "The group identified " +
+      (data.identified_player || "the imposter") + " as the imposter.";
   } else if (data.tie) {
-    $("voteSummary").textContent = "The vote was tied, so the imposter escaped identification. No voting bonus this round.";
+    $("voteSummary").textContent = "The vote was tied. No player was identified.";
   } else {
     $("voteSummary").textContent = "The group voted for " +
-      (data.identified_player || "the wrong player") + ". The imposter escaped, and no voting bonus was awarded.";
+      (data.identified_player || "another player") + ". The imposter was not identified.";
   }
 
   const myPoints = Number(data.my_round_points || 0);
-  $("roundPoints").textContent = (myPoints > 0 ? "+" : "") + myPoints + " points this round";
-  $("roundPoints").hidden = Number(data.round_number) === 1;
+  $("roundPoints").textContent = (myPoints > 0 ? "+" : "") + myPoints + " pts";
+  $("roundPoints").hidden = false;
   $("scoreboardList").innerHTML = (data.leaderboard || []).map((player, index) => {
     const showMovement = Number(data.round_number) > 1;
     const movement = Number(player.rank_change || 0);
