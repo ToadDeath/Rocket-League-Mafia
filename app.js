@@ -80,6 +80,8 @@ async function refreshLobby() {
   isLobbyCreator = !!data.is_creator;
   if (data.room_status === "finished") { await showFinalStandings(); return; }
   $("endGameBtn").hidden = !isLobbyCreator;
+  $("startGameBtn").hidden = !isLobbyCreator;
+  $("newRoundBtn").hidden = !isLobbyCreator;
   $("taskSelectionPanel").hidden = data.room_status !== "waiting";
   $("editTaskSelectionBtn").hidden = !isLobbyCreator;
   if (data.room_status !== "waiting") {
