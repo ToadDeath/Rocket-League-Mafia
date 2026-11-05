@@ -293,3 +293,15 @@ button{touch-action:manipulation}
   background:linear-gradient(145deg,#382b5b,#1c1d38);
   border-color:#8870c9;
 }
+
+
+/* Round points breakdown: show each award once, with the leaderboard reserved for totals. */
+.points-breakdown{padding-bottom:14px}
+.points-breakdown-row,.points-breakdown-total{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:11px 0;border-top:1px solid #26334a}
+.points-breakdown-row>div{display:grid;gap:4px}
+.points-breakdown-row strong,.points-breakdown-total strong{font-size:12px;color:#dce8f7}
+.points-breakdown-row small{font-size:10px;color:var(--muted)}
+.points-breakdown-row>b,.points-breakdown-total>b{font-size:13px;white-space:nowrap}
+.points-breakdown-total{margin-top:3px;padding-top:14px}
+.points-breakdown-total strong{font-size:13px}
+@media(max-width:420px){.points-breakdown-row,.points-breakdown-total{padding:10px 0}}
