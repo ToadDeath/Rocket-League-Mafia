@@ -241,3 +241,21 @@ button{touch-action:manipulation}
   .role-symbol,.task-icon{margin:18px 0 8px}
   .card-bottom{padding-top:16px}
 }
+
+
+/* Larger desktop and high-resolution displays: add breathing room without
+   letting the interface stretch to an uncomfortable reading width. */
+@media(min-width:1440px){
+  .app-shell{max-width:1240px}
+  main{padding-top:52px}
+  .panel{padding:22px}
+  h1{font-size:clamp(94px,6vw,104px)}
+}
+@media(min-width:2560px){
+  .app-shell{max-width:1360px}
+  main{padding-top:60px;padding-bottom:84px}
+  .panel{padding:24px}
+  .hero{max-width:640px}
+  h1{font-size:104px}
+  .side-art{transform:scale(1.08);transform-origin:top right}
+}
