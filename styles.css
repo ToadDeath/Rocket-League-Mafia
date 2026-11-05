@@ -145,7 +145,7 @@
 /* Responsive layout safeguards for phones, tablets, and narrow browser windows. */
 html{min-width:320px;overflow-x:hidden}
 body{min-width:320px;overflow-x:hidden}
-.app-shell{width:100%;padding-left:clamp(14px,4vw,42px);padding-right:clamp(14px,4vw,42px)}
+.app-shell{width:100%;padding-left:max(clamp(14px,4vw,42px),env(safe-area-inset-left));padding-right:max(clamp(14px,4vw,42px),env(safe-area-inset-right))}
 main{min-width:0}
 .screen{min-width:0}
 img,svg,video{max-width:100%}
@@ -159,6 +159,11 @@ button{touch-action:manipulation}
 .task-option{min-width:0;overflow-wrap:anywhere}
 .task-option-readonly small{white-space:nowrap}
 .scoreboard-row,.revealed-role-card,.result-banner{min-width:0;overflow-wrap:anywhere}
+
+@media(max-width:760px){
+  .side-art{display:none}
+  .hero{max-width:620px}
+}
 
 @media(max-width:700px){
   main{padding-top:30px;padding-bottom:46px}
