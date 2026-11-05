@@ -470,24 +470,44 @@ async function showRoundResults() {
       (data.identified_player || "another player") + ". The imposter was not identified.";
   }
 
-  const myPoints = Number(data.my_round_points || 0);
-  $("roundPoints").textContent = (myPoints > 0 ? "+" : "") + myPoints + " pts";
-  $("roundPoints").hidden = false;
+  const signedPoints = value => (Number(value) > 0 ? "+" : "") + Number(value || 0) + " pts";
+  const matchResult = data.my_match_result === "win" ? "Won" : "Lost";
+  const taskResult = data.my_task_completed ? "Completed" : "Not completed";
+  let voteLabel = "No vote bonus";
+  if (isImposter && data.correct_vote) voteLabel = "Caught";
+  else if (isImposter && Number(data.vote_points || 0) > 0) voteLabel = "Voted with the majority";
+  else if (isImposter && data.tie) voteLabel = "Vote tied";
+  else if (isImposter) voteLabel = "Avoided detection";
+  else if (Number(data.vote_points || 0) > 0) voteLabel = "Correctly identified the imposter";
+  else if (data.tie) voteLabel = "Vote tied";
+  else voteLabel = "Incorrect vote";
+
+  const pointRows = [
+    ["Match result", matchResult, data.match_points],
+    ["Secret task", taskResult, data.task_points],
+    ["Vote", voteLabel, data.vote_points]
+  ];
+  $("pointsBreakdown").innerHTML = '<div class="panel-heading">YOUR POINTS <span>THIS ROUND</span></div>' +
+    pointRows.map(([label, status, points]) =>
+      '<div class="points-breakdown-row"><div><strong>' + label + '</strong><small>' + status + '</small></div>' +
+      '<b class="' + (Number(points) > 0 ? 'points-up' : Number(points) < 0 ? 'points-down' : 'points-zero') + '">' +
+      signedPoints(points) + '</b></div>'
+    ).join("") +
+    '<div class="points-breakdown-total"><strong>Total earned</strong><b class="' +
+    (Number(data.my_round_points) > 0 ? 'points-up' : Number(data.my_round_points) < 0 ? 'points-down' : 'points-zero') +
+    '">' + signedPoints(data.my_round_points) + '</b></div>';
+
   $("scoreboardList").innerHTML = (data.leaderboard || []).map((player, index) => {
     const showMovement = Number(data.round_number) > 1;
     const movement = Number(player.rank_change || 0);
     const movementText = movement > 0 ? "↑ " + movement : movement < 0 ? "↓ " + Math.abs(movement) : "—";
     const movementClass = movement > 0 ? "rank-up" : movement < 0 ? "rank-down" : "rank-stay";
-    const roundPoints = Number(player.round_points || 0);
-    const pointsText = (roundPoints > 0 ? "+" : "") + roundPoints;
     return '<div class="scoreboard-row' + (player.is_you ? ' is-you' : '') + '">' +
       '<div class="rank-number">' + (index + 1) + '</div>' +
       '<div class="scoreboard-player"><strong>' + escapeHtml(player.display_name) +
       (player.is_you ? ' <span class="you-tag">YOU</span>' : '') + '</strong>' +
       (showMovement ? '<small class="' + movementClass + '">' + movementText + ' places</small>' : '') + '</div>' +
-      '<div class="score-total"><strong>' + player.score + ' pts</strong>' +
-      (showMovement ? '<small class="' + (roundPoints > 0 ? 'points-up' : roundPoints < 0 ? 'points-down' : 'points-zero') +
-      '">' + pointsText + ' this round</small>' : '') + '</div></div>';
+      '<div class="score-total"><strong>' + player.score + ' pts</strong></div></div>';
   }).join("");
   $("revealedCards").innerHTML = (data.cards || []).map(card =>
     '<div class="revealed-role-card ' + (card.role === "imposter" ? "imposter" : "teammate") + '"><div class="revealed-player-name">' + escapeHtml(card.display_name) +
