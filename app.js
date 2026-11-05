@@ -161,9 +161,6 @@ async function loadLobbyTasks() {
   taskLibraryLoadedFor = currentRoomCode;
 }
 function updateTaskSelectionMode() {
-  $("taskSelectionHelp").textContent = taskSelectionEditing
-    ? "Choose which tasks can be dealt. Each player gets a different task each round."
-    : "Everyone can see the available tasks. Tasks marked IN ROTATION can be assigned this game.";
   $("editTaskSelectionBtn").hidden = !isLobbyCreator || taskSelectionEditing;
   $("saveTaskSelectionBtn").hidden = !taskSelectionEditing;
   $("cancelTaskSelectionBtn").hidden = !taskSelectionEditing;
@@ -222,7 +219,9 @@ async function createLobby() {
     currentRoomCode = data.room_code;
     taskLibraryLoadedFor = null;
     $("roomCode").textContent = currentRoomCode;
+    $("taskSelectionPanel").hidden = false;
     show("lobbyScreen");
+    loadLobbyTasks();
     startLobbyRefresh();
     toast("Lobby created. Share the room code with your players.");
   } catch (error) {
@@ -247,7 +246,9 @@ async function joinLobby() {
     currentRoomCode = data.room_code;
     taskLibraryLoadedFor = null;
     $("roomCode").textContent = currentRoomCode;
+    $("taskSelectionPanel").hidden = false;
     show("lobbyScreen");
+    loadLobbyTasks();
     startLobbyRefresh();
     toast("You joined the lobby.");
   } catch (error) {
