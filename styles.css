@@ -305,3 +305,59 @@ button{touch-action:manipulation}
 .points-breakdown-total{margin-top:3px;padding-top:14px}
 .points-breakdown-total strong{font-size:13px}
 @media(max-width:420px){.points-breakdown-row,.points-breakdown-total{padding:10px 0}}
+
+
+/* Round results visual hierarchy */
+#voteResultsScreen{--result-accent:#54d7ed;max-width:820px;margin:0 auto}
+#voteResultsScreen>.eyebrow{margin-bottom:8px}
+#voteResultsScreen>h2{margin-bottom:18px}
+#roundOutcomeCard{position:relative;overflow:hidden;padding:22px 24px;background:linear-gradient(125deg,#14263b,#111b2d);border-color:#344760}
+#roundOutcomeCard:before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:#8294ad}
+#roundOutcomeCard.success{background:linear-gradient(115deg,#10372f,#13263a);border-color:#267e65}
+#roundOutcomeCard.success:before{background:#4ed6a4}
+#roundOutcomeCard.failure{background:linear-gradient(115deg,#3a202e,#211e32);border-color:#854052}
+#roundOutcomeCard.failure:before{background:#ff7187}
+#roundOutcomeStatus{font-size:11px;letter-spacing:1.5px;padding:7px 10px;border-radius:6px;background:#27374c;color:#d9e6f5}
+#roundOutcomeCard.success #roundOutcomeStatus{background:#174d3e;color:#7bf0bd}
+#roundOutcomeCard.failure #roundOutcomeStatus{background:#572b3c;color:#ff9aaa}
+#roundOutcomeCard p{color:#c1cede;margin:12px 0 0;font-size:13px;line-height:1.6}
+#voteOutcomeTitle{font-size:clamp(29px,4vw,38px)}
+#pointsBreakdown{background:linear-gradient(145deg,#111b2c,#0e1727);border-color:#2b3a52;padding:20px 22px}
+#pointsBreakdown .panel-heading{color:#d8e6f5;margin-bottom:14px}
+#pointsBreakdown .panel-heading span{color:#7e91ad}
+.points-breakdown-row{position:relative;margin:7px 0;padding:12px 14px 12px 17px;border:1px solid #293950;border-radius:9px;background:#142238}
+.points-breakdown-row:before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:#6d91b9}
+.points-breakdown-row.match-points:before{background:#54b9e8}
+.points-breakdown-row.task-points:before{background:#a78bfa}
+.points-breakdown-row.vote-points:before{background:#e7ad58}
+.points-breakdown-row>div{gap:5px}
+.points-breakdown-row strong{font-size:12px;color:#e5edf8}
+.points-breakdown-row small{font-size:10px;color:#9eafc5}
+.points-breakdown-row>b{font-size:13px}
+.points-breakdown-total{border-top:1px solid #34445c;margin-top:13px;padding:15px 2px 0}
+.points-breakdown-total strong{color:#dce8f7}
+.points-breakdown-total>b{font-size:16px}
+.scoreboard-panel{background:linear-gradient(145deg,#13243a,#0e192b);border-color:#30445f;padding:20px 22px}
+.scoreboard-panel .panel-heading{color:#c5d6eb;margin-bottom:15px}
+.scoreboard-panel .panel-heading span{color:#7189a8}
+.scoreboard-panel #scoreboardList{display:grid;gap:7px}
+.scoreboard-panel .scoreboard-row{display:grid;grid-template-columns:36px minmax(0,1fr) auto;align-items:center;gap:12px;padding:10px 12px;border:1px solid #263952;border-radius:9px;background:#101d30;transition:background .15s,border-color .15s}
+.scoreboard-panel .scoreboard-row.is-you{background:#183248;border-color:#34718a;box-shadow:inset 3px 0 #54d7ed}
+.scoreboard-panel .rank-number{width:29px;height:29px;background:#263951;color:#c3d3e7;font-size:11px}
+.scoreboard-panel .rank-number.rank-first{background:#57472b;color:#ffe09a}
+.scoreboard-panel .rank-number.rank-second{background:#39475a;color:#dce6f2}
+.scoreboard-panel .rank-number.rank-third{background:#503b31;color:#e9b99a}
+.scoreboard-panel .scoreboard-player{min-width:0}
+.scoreboard-panel .scoreboard-player strong{font-size:12px;color:#e8f0fa}
+.scoreboard-panel .scoreboard-player small{display:block;margin-top:4px;font-size:9px;letter-spacing:.4px}
+.scoreboard-panel .score-total{display:flex;justify-content:flex-end}
+.scoreboard-panel .leaderboard-score{display:flex;align-items:baseline;gap:5px;padding:7px 10px;border-radius:7px;background:#20344d;color:#dcecff;font-size:16px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.scoreboard-panel .leaderboard-score small{font-size:8px;letter-spacing:1px;color:#8fa8c7}
+.scoreboard-panel .scoreboard-row.is-you .leaderboard-score{background:#16475a;color:#8deaff}
+@media(max-width:480px){
+ #roundOutcomeCard{padding:17px}
+ #pointsBreakdown,#voteResultsScreen>.scoreboard-panel{padding:16px}
+ .scoreboard-panel .scoreboard-row{grid-template-columns:30px minmax(0,1fr) auto;gap:8px;padding:9px 8px}
+ .scoreboard-panel .rank-number{width:26px;height:26px}
+ .scoreboard-panel .leaderboard-score{font-size:14px;padding:6px 8px}
+}
