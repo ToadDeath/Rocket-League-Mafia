@@ -267,3 +267,29 @@ button{touch-action:manipulation}
 .result-banner-score{display:flex;flex-direction:column;align-items:flex-end;gap:7px;text-align:right}
 .result-banner-score .round-points{border-top:0;padding-top:0;font-size:17px;white-space:nowrap}
 @media(max-width:420px){.result-banner-score .round-points{font-size:15px}}
+
+
+/* Imposter is a role identity, not a negative outcome. Reserve red for bad results. */
+.role-card.imposter,
+.task-card.imposter-task{
+  background:linear-gradient(145deg,#382b5b,#1c1d38);
+  border-color:#8870c9;
+}
+.role-card.imposter .role-symbol,
+.task-card.imposter-task .task-icon,
+.role-card.imposter .secret-task-title{
+  color:#c7b5ff!important;
+}
+.revealed-role-card.imposter{
+  border-color:#8870c9;
+  background:linear-gradient(145deg,#382b5b,#1c1d38);
+}
+.revealed-role-card.imposter .revealed-role,
+.imposter-preview .preview-card-top,
+.imposter-preview .preview-role{
+  color:#c7b5ff;
+}
+.home-preview-card.imposter-preview{
+  background:linear-gradient(145deg,#382b5b,#1c1d38);
+  border-color:#8870c9;
+}
