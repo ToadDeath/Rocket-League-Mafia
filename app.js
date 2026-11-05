@@ -614,9 +614,10 @@ async function showFinalStandings() {
       ? ' <span class="you-tag">WINNER</span>'
       : ' <span class="neutral-tag">WINNER</span>')
       : isTied ? ' <span class="neutral-tag">TIED</span>' : '';
-    return '<div class="scoreboard-row ' + rowClass + '"><div class="rank-number">' + (index + 1) +
+    const rankClass = index === 0 ? "first" : index === 1 ? "second" : index === 2 ? "third" : "other";
+    return '<div class="scoreboard-row ' + rowClass + '"><div class="rank-number rank-' + rankClass + '">' + (index + 1) +
       '</div><div class="scoreboard-player"><strong>' + escapeHtml(player.display_name) +
-      tag + '</strong></div><div class="score-total"><strong>' + player.score + ' pts</strong></div></div>';
+      tag + '</strong></div><div class="score-total"><strong class="leaderboard-score">' + player.score + '<small>PTS</small></strong></div></div>';
   }).join("");
   $("gameWinnerTitle").textContent = hasSoleWinner
     ? board[0].display_name + " wins!"
