@@ -375,3 +375,22 @@ button{touch-action:manipulation}
 #pointsBreakdown .points-breakdown-row>b{flex:0 0 auto;font-size:11px}
 .points-up{color:#62dcae!important}.points-down{color:#ff8296!important}.points-zero{color:#9eafc5!important}
 @media(max-width:650px){.points-breakdown-grid{grid-template-columns:1fr}#pointsBreakdown .points-breakdown-row{padding:9px 11px}}
+
+
+/* Match the final standings podium and score styling to the round leaderboard. */
+#finalStandings{display:grid;gap:7px}
+#finalStandings .scoreboard-row{grid-template-columns:36px minmax(0,1fr) auto;padding:10px 12px;border:1px solid #263952;border-radius:9px;background:#101d30}
+#finalStandings .rank-number{width:29px;height:29px;background:#263951;color:#c3d3e7;font-size:11px}
+#finalStandings .rank-number.rank-first{background:#57472b;color:#ffe09a}
+#finalStandings .rank-number.rank-second{background:#39475a;color:#dce6f2}
+#finalStandings .rank-number.rank-third{background:#503b31;color:#e9b99a}
+#finalStandings .score-total{display:flex;justify-content:flex-end}
+#finalStandings .leaderboard-score{display:flex;align-items:baseline;gap:5px;padding:7px 10px;border-radius:7px;background:#20344d;color:#dcecff;font-size:16px;font-variant-numeric:tabular-nums;white-space:nowrap}
+#finalStandings .game-winner{background:#183b35;border-color:#36c995}
+#finalStandings .game-tied{background:#17263a;border-color:#40516c}
+#finalStandings .game-self{background:#172438;border-color:#30445f}
+@media(max-width:480px){
+ #finalStandings .scoreboard-row{grid-template-columns:30px minmax(0,1fr) auto;gap:8px;padding:9px 8px}
+ #finalStandings .rank-number{width:26px;height:26px}
+ #finalStandings .leaderboard-score{font-size:14px;padding:6px 8px}
+}
