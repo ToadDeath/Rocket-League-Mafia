@@ -489,7 +489,7 @@ async function showRoundResults() {
   ];
   $("pointsBreakdown").innerHTML = '<div class="panel-heading">YOUR POINTS <span>THIS ROUND</span></div>' +
     pointRows.map(([label, status, points]) =>
-      '<div class="points-breakdown-row"><div><strong>' + label + '</strong><small>' + status + '</small></div>' +
+      '<div class="points-breakdown-row ' + (label === "Match result" ? "match-points" : label === "Secret task" ? "task-points" : "vote-points") + '"><div><strong>' + label + '</strong><small>' + status + '</small></div>' +
       '<b class="' + (Number(points) > 0 ? 'points-up' : Number(points) < 0 ? 'points-down' : 'points-zero') + '">' +
       signedPoints(points) + '</b></div>'
     ).join("") +
@@ -503,11 +503,11 @@ async function showRoundResults() {
     const movementText = movement > 0 ? "↑ " + movement : movement < 0 ? "↓ " + Math.abs(movement) : "—";
     const movementClass = movement > 0 ? "rank-up" : movement < 0 ? "rank-down" : "rank-stay";
     return '<div class="scoreboard-row' + (player.is_you ? ' is-you' : '') + '">' +
-      '<div class="rank-number">' + (index + 1) + '</div>' +
+      '<div class="rank-number rank-' + (index === 0 ? 'first' : index === 1 ? 'second' : index === 2 ? 'third' : 'other') + '">' + (index + 1) + '</div>' +
       '<div class="scoreboard-player"><strong>' + escapeHtml(player.display_name) +
       (player.is_you ? ' <span class="you-tag">YOU</span>' : '') + '</strong>' +
       (showMovement ? '<small class="' + movementClass + '">' + movementText + ' places</small>' : '') + '</div>' +
-      '<div class="score-total"><strong>' + player.score + ' pts</strong></div></div>';
+      '<div class="score-total"><strong class="leaderboard-score">' + player.score + '<small>PTS</small></strong></div></div>';
   }).join("");
   $("revealedCards").innerHTML = (data.cards || []).map(card =>
     '<div class="revealed-role-card ' + (card.role === "imposter" ? "imposter" : "teammate") + '"><div class="revealed-player-name">' + escapeHtml(card.display_name) +
