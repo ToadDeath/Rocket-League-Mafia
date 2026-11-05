@@ -9,16 +9,18 @@ const screens = [...document.querySelectorAll(".screen")];
 let currentRoomCode = null;
 let isLobbyCreator = false;
 let taskLibraryLoadedFor = null;
+let taskLoadInFlightFor = null;
 let taskSelectionEditing = false;
 let taskPanelExpanded = false;
 let refreshTimer = null;
+let lobbyRefreshInFlight = false;
 let busy = false;
 let currentRoundId = null;
 let assignmentLoadedFor = null;
 
 function show(id) {
   screens.forEach((screen) => screen.classList.toggle("active", screen.id === id));
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  window.scrollTo(0, 0);
 }
 function toast(message) {
   $("toast").textContent = message;
@@ -62,14 +64,16 @@ function readSettings() {
 function startLobbyRefresh() {
   stopLobbyRefresh();
   refreshLobby();
-  refreshTimer = setInterval(refreshLobby, 3000);
+  refreshTimer = setInterval(refreshLobby, 1500);
 }
 function stopLobbyRefresh() {
   if (refreshTimer) clearInterval(refreshTimer);
   refreshTimer = null;
 }
 async function refreshLobby() {
-  if (!currentRoomCode) return;
+  if (!currentRoomCode || lobbyRefreshInFlight) return;
+  lobbyRefreshInFlight = true;
+  try {
   const { data, error } = await db.rpc("get_room_state", { p_room_code: currentRoomCode });
   if (error) {
     console.error(error);
@@ -135,16 +139,24 @@ async function refreshLobby() {
     '</div><div class="player-status">' + (index === 0 ? "IN THE LOBBY" : "CONNECTED") +
     '</div></div></div>'
   ).join("");
+  } finally {
+    lobbyRefreshInFlight = false;
+  }
 }
 
 async function loadLobbyTasks() {
-  if (!currentRoomCode) return;
-  const { data, error } = await db.rpc("get_lobby_tasks", { p_room_code: currentRoomCode });
+  if (!currentRoomCode || taskLibraryLoadedFor === currentRoomCode ||
+      taskLoadInFlightFor === currentRoomCode) return;
+  const roomCode = currentRoomCode;
+  taskLoadInFlightFor = roomCode;
+  try {
+  const { data, error } = await db.rpc("get_lobby_tasks", { p_room_code: roomCode });
   if (error) {
     console.error(error);
     toast("Couldn't load the task list: " + error.message);
     return;
   }
+  if (currentRoomCode !== roomCode) return;
   const tasks = data.tasks || [];
   const renderTasks = (role, targetId) => {
     const items = tasks.filter(task => task.role === role);
@@ -160,7 +172,10 @@ async function loadLobbyTasks() {
   $("taskSelectionCounts").textContent =
     tasks.filter(task => task.role === "teammate" && task.selected).length + " teammate tasks · " +
     tasks.filter(task => task.role === "imposter" && task.selected).length + " imposter tasks selected";
-  taskLibraryLoadedFor = currentRoomCode;
+  taskLibraryLoadedFor = roomCode;
+  } finally {
+    if (taskLoadInFlightFor === roomCode) taskLoadInFlightFor = null;
+  }
 }
 function updateTaskSelectionMode() {
   $("editTaskSelectionBtn").hidden = !isLobbyCreator || taskSelectionEditing;
@@ -487,15 +502,15 @@ async function showRoundResults() {
     ["Secret task", taskResult, data.task_points],
     ["Vote", voteLabel, data.vote_points]
   ];
-  $("pointsBreakdown").innerHTML = '<div class="panel-heading">YOUR POINTS <span>THIS ROUND</span></div>' +
+  $("pointsBreakdown").innerHTML = '<div class="points-breakdown-heading"><strong>YOUR POINTS THIS ROUND</strong><span class="' +
+    (Number(data.my_round_points) > 0 ? 'points-up' : Number(data.my_round_points) < 0 ? 'points-down' : 'points-zero') +
+    '">' + signedPoints(data.my_round_points) + '</span></div>' +
+    '<div class="points-breakdown-grid">' +
     pointRows.map(([label, status, points]) =>
-      '<div class="points-breakdown-row ' + (label === "Match result" ? "match-points" : label === "Secret task" ? "task-points" : "vote-points") + '"><div><strong>' + label + '</strong><small>' + status + '</small></div>' +
+      '<div class="points-breakdown-row"><div><strong>' + label + '</strong><small>' + status + '</small></div>' +
       '<b class="' + (Number(points) > 0 ? 'points-up' : Number(points) < 0 ? 'points-down' : 'points-zero') + '">' +
       signedPoints(points) + '</b></div>'
-    ).join("") +
-    '<div class="points-breakdown-total"><strong>Total earned</strong><b class="' +
-    (Number(data.my_round_points) > 0 ? 'points-up' : Number(data.my_round_points) < 0 ? 'points-down' : 'points-zero') +
-    '">' + signedPoints(data.my_round_points) + '</b></div>';
+    ).join("") + '</div>';
 
   $("scoreboardList").innerHTML = (data.leaderboard || []).map((player, index) => {
     const showMovement = Number(data.round_number) > 1;
