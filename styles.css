@@ -140,3 +140,99 @@
 .task-selection-actions .btn{padding:11px 14px}
 .task-selection-panel:not(.is-editing) .task-selection-footer{justify-content:space-between}
 @media(max-width:650px){.task-selection-actions{width:100%;flex-direction:column}.task-selection-actions .btn{width:100%}}
+
+
+/* Responsive layout safeguards for phones, tablets, and narrow browser windows. */
+html{min-width:320px;overflow-x:hidden}
+body{min-width:320px;overflow-x:hidden}
+.app-shell{width:100%;padding-left:clamp(14px,4vw,42px);padding-right:clamp(14px,4vw,42px)}
+main{min-width:0}
+.screen{min-width:0}
+img,svg,video{max-width:100%}
+button,input,select{max-width:100%}
+button{touch-action:manipulation}
+.field-label input,.field-label select,.point-row input{min-height:44px}
+.btn,.choice,.vote-option,.room-code button,.end-game-link{min-height:44px}
+.narrow{width:100%;max-width:560px}
+.panel{min-width:0}
+.task-options{min-width:0}
+.task-option{min-width:0;overflow-wrap:anywhere}
+.task-option-readonly small{white-space:nowrap}
+.scoreboard-row,.revealed-role-card,.result-banner{min-width:0;overflow-wrap:anywhere}
+
+@media(max-width:700px){
+  main{padding-top:30px;padding-bottom:46px}
+  .topbar{gap:12px}
+  .top-actions{gap:9px}
+  .lobby-head{gap:16px}
+  .lobby-head-actions{min-width:0}
+  .room-code{min-width:0}
+  .room-code strong{font-size:clamp(16px,5vw,19px)}
+  .task-selection-columns{grid-template-columns:minmax(0,1fr);gap:18px}
+  .task-options{max-height:220px}
+  .task-selection-footer{min-width:0}
+  .task-selection-counts{overflow-wrap:anywhere}
+  .result-options{grid-template-columns:minmax(0,1fr)}
+  .choice-row{min-width:0}
+  .choice{min-width:0}
+  .vote-list{grid-template-columns:minmax(0,1fr)}
+  .revealed-cards-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}
+  .scoreboard-row{grid-template-columns:30px minmax(0,1fr) auto}
+  footer{gap:12px;flex-wrap:wrap;line-height:1.5}
+}
+
+@media(max-width:420px){
+  .app-shell{padding-left:14px;padding-right:14px}
+  .topbar{height:64px}
+  .brand{gap:7px;font-size:8px;letter-spacing:.7px}
+  .brand-mark{width:30px;height:30px;flex:0 0 30px}
+  .demo-pill{font-size:8px;letter-spacing:1px;padding:6px 8px}
+  .icon-btn{width:32px;height:32px;flex-basis:32px}
+  main{padding-top:24px}
+  .hero{padding-top:44px}
+  h1{font-size:clamp(39px,12vw,50px);letter-spacing:-2.8px;line-height:1}
+  h2{font-size:clamp(26px,8vw,31px);letter-spacing:-1px;overflow-wrap:anywhere}
+  .home-actions{gap:10px;margin-top:28px}
+  .panel{padding:15px;margin:13px 0}
+  .panel-heading{gap:10px;letter-spacing:1px}
+  .panel-heading span{text-align:right}
+  .lobby-head-actions{gap:8px}
+  .room-code{padding:9px 10px}
+  .end-game-link{padding:9px 10px;font-size:9px}
+  .player{padding:10px}
+  .role-card,.task-card{min-height:300px;padding:18px}
+  .role-card h2,.task-card h2{font-size:25px}
+  .secret-task-title{font-size:19px!important}
+  .report-secret-card h2{font-size:19px!important}
+  .result-banner{padding:15px}
+  .scoreboard-row{grid-template-columns:26px minmax(0,1fr) auto;gap:6px;padding:10px 4px}
+  .rank-number{width:24px;height:24px}
+  .scoreboard-player strong,.score-total strong{font-size:10px}
+  .scoreboard-player small,.score-total small{font-size:8px}
+  .you-tag,.neutral-tag{font-size:7px}
+  .task-selection-actions{gap:8px}
+  .task-selection-actions .btn{white-space:normal}
+  .toast{width:calc(100% - 28px);text-align:center;bottom:max(14px,env(safe-area-inset-bottom))}
+  dialog{width:calc(100% - 28px);max-width:420px}
+}
+
+@media(max-width:350px){
+  .brand{font-size:7px;letter-spacing:.35px}
+  .top-actions{gap:6px}
+  .demo-pill{padding:5px 6px;font-size:7px}
+  .room-code strong{font-size:15px;letter-spacing:2px}
+  .lobby-head-actions{flex-wrap:wrap}
+  .end-game-link{flex:1}
+  .point-row{gap:8px;font-size:11px}
+  .point-row input{width:58px;flex:0 0 58px}
+  .task-option{font-size:11px;padding:8px}
+}
+
+@media(orientation:landscape) and (max-height:520px){
+  main{padding-top:18px;padding-bottom:28px}
+  .hero{padding-top:24px}
+  .side-art{transform:scale(.62);transform-origin:top right;top:95px;right:-45px}
+  .role-card,.task-card{min-height:250px;margin:14px 0}
+  .role-symbol,.task-icon{margin:18px 0 8px}
+  .card-bottom{padding-top:16px}
+}
